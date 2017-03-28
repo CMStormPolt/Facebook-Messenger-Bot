@@ -1,0 +1,28 @@
+{
+  "getStartedButtonText": "Get Started",
+  "persistentMenu": [
+        {
+          "type": "postback", 
+          "title": "Delivery, Exchanges & Quality",
+          "payload": "startFAQ"  
+        },
+        {
+          "type": "postback",
+          "title": "New Arrivals & Search",
+          "payload": "startfindProducts"
+        },
+        {
+          "type": "postback",
+          "title": "Promo Offers",
+          "payload": "startOffers"
+        },
+        {
+           "type": "web_url",
+           "title": "Go to www.ParadiseShop.eu",
+           "url": "https://paradiseshop.eu",
+           "webview_height_ratio": "full",
+           "messenger_extensions": false
+         }
+  ],
+  "welcomeText": "Welcome to Boutique Paradise"
+}

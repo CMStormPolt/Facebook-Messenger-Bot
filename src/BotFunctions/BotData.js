@@ -1,0 +1,314 @@
+"use strict";
+const fb = require("../fb.js");
+const Promise = require('bluebird');
+const co = Promise.coroutine
+const {FB, FacebookApiException} = require("fb")
+const time = require('date-and-time')
+const fs = require('fs')
+
+const MongoDB = require('../MongoApparel/MongoDB')
+
+
+//Useful Objects for Facebook - not used yet
+function SwitchPback2Reply(PostbackPayload){
+    switch(PostbackPayload){
+        case 'GoToFAQ':GoToFAQ;break;
+        case 'FAQdelivery':FAQdelivery;break;
+        case 'startFAQ':startFAQ;break;
+        case 'startfindProducts':startfindProducts;break;
+        case 'startOffers':startOffers;break;
+        case 'startGPSpics':startGPSpics;break;
+        case 'QuickReplies':QuickReplies;break;
+    }
+    return location
+}
+
+const BotCommands = ['BOT_Track_Suits','FAQdelivery','startFAQ', 'startfindProducts', 'startOffers', 'startGPSpics', 'BOTOn_Sale']
+exports.BotCommands = BotCommands
+
+    //ParadiseBot functions
+
+    //Checks if the FB.postback is an internal command and redirects execution to our Bot functions
+    function BotCmdCheck(message, SenderID) {
+      let payload
+      if (message.postback){
+      payload = message.postback.payload
+    }
+      else if (message.quick_reply){
+          payload = message.quick_reply.payload
+        }
+
+if(payload !== undefined){
+      if (BotCommands.indexOf(payload) !== -1) {
+        //console.log(postback.postback.payload+'()')
+        eval(payload + '(SenderID)')
+        return true
+      }}
+
+      else {
+        return false
+      }
+    };
+exports.BotCmdCheck = BotCmdCheck
+
+
+  function startFAQ(SenderID) {
+      let FAQ = {
+        'title':'Which topic bugs you?',
+        'replies':['Delivery', 'Exchanges', 'Quality']
+      }
+      fb.reply(fb.quickReply(FAQ), SenderID)
+    };
+exports.startFAQ = startFAQ
+
+    function startfindProducts(SenderID) {
+      let Search = {
+        'title':'Ok, Great :)) You can pick a category, or simply type a product code :)',
+        'replies':['New Arrivals', "Women's", "Men's", 'On Sale']
+      }
+      fb.reply(fb.quickReply(Search), SenderID)
+    };
+exports.startfindProducts = startfindProducts
+
+    function BOT_Track_Suits(SenderID){
+      let Buttons = {}
+      Buttons.replies = ['Horrid',"It's ok",'Like it :)', 'Show All Images']
+      let QR = fb.ImageQR(Buttons)
+
+      fb.reply({
+            quick_replies:QR.quick_replies,
+            attachment: {
+                  type: "image",
+                  payload: {url: 'https://cms.flameflame.eu/uploads/1/1485862218SD110_(1)_resized.jpg'}
+             },
+        }, SenderID)
+    };
+exports.BOT_Track_Suits = BOT_Track_Suits
+
+
+    function BOT_New_Arrivals(SenderID){
+      let Buttons = {}
+      Buttons.replies = ['Horrid',"It's ok",'Like it :)', 'Show All Images']
+      let QR = fb.ImageQR(Buttons)
+
+      fb.reply({
+            quick_replies:QR.quick_replies,
+            attachment: {
+                  type: "image",
+                  payload: {url: 'https://cms.flameflame.eu/uploads/1/1485862218SD110_(1)_resized.jpg'}
+             },
+        }, SenderID)
+    };
+exports.BOT_New_Arrivals = BOT_New_Arrivals
+
+
+    function startOffers(SenderID) {
+      let Promo = {
+        'title':'Lovely <3 :)) You can click on the button to show next items :)',
+        'replies':["Keep 'em coming"]
+      }
+      fb.reply(fb.quickReply(Promo), SenderID)
+    };
+exports.startOffers = startOffers
+
+
+
+    function startGPSpics(SenderID) {
+      GetUserData(SenderID)
+    };
+exports.startGPSpics = startGPSpics
+
+
+    function FAQdelivery(){
+      fb.reply(QuickReplies(FAQ.delivery, 'Go Back', 'startFAQ'))
+    };
+exports.FAQdelivery = FAQdelivery
+
+    
+    
+    function GreetForTimeOfDay() {
+      let t = new Date()
+      let t2 = time.format(t, 'HH');
+      console.log(Greetings[t2]+': was sent as a greeting')
+      return Greetings[t2]
+    }
+ 
+    function RecordNickName(nick, SenderID){};
+
+
+    function GetUserNames(SenderID, FirstOrLast) {
+      return new Promise((resolve, reject)=>{
+      FB.setAccessToken(process.env.FB_PAGE_ACCESS_TOKEN);
+      FB.api(
+        '/'+SenderID,
+        'GET',
+        {"fields":"first_name,last_name,gender"}, (names)=>{console.log(names);resolve(names)}
+      )
+  })
+
+      };
+exports.GetUserNames = GetUserNames
+
+function AppropriateRespect(message,senderId){
+    return new Promise((res,rej)=>{
+    GetUserNames(senderId)
+    .then((names)=>{
+            let gender = names.gender
+            names.MrMs = ()=>{if(gender == 'male'){return ('Mr.')}else if(gender == 'female'){return ('Ms.')}}
+
+            if (gender == null){names.first_name="";names.last_name="";names.MrMs=":)"} 
+
+            message.text = message.text.replace('$MrMs',names.MrMs)
+            message.text = message.text.replace('$f_name',names.first_name)
+            message.text = message.text.replace('$l_name',names.last_name)
+            res(message)
+        })
+    })
+}
+exports.AppropriateRespect = AppropriateRespect
+
+    //End of ParadiseBot functions
+
+//This function creates an OBJECT for fb.reply to use
+function QuickReplies(message, Button1Title, Button1Payload, Button2Title, Button2Payload, Button3Title, Button3Payload, Button4Title, Button4Payload) {
+  if (message == "") {
+    return null;
+  } else {
+    return {
+      "text": message,
+      "quick_replies": [
+        {
+          "content_type": "text",
+          "title": Button1Title,
+          "payload": Button1Payload
+        },
+        {
+          "content_type": "text",
+          "title": Button2Title,
+          "payload": Button2Payload
+        },
+        {
+          "content_type":"text",
+          "title":Button3Title,
+          "payload":Button3Payload
+        },
+        /* 
+        {
+          "content_type":"text",
+          "title":Button4Title,
+          "payload":Button4Payload
+        },
+       {
+          "content_type":"text",
+          "title":Button5Title,
+          "payload":Button5Payload
+        },
+        {
+          "content_type":"text",
+          "title":Button6Title,
+          "payload":Button6Payload
+        }*/
+      ]
+    }
+  }
+};
+exports.QuickReplies = QuickReplies
+
+
+    //Object of Persistent Menu
+    // For more information Google - Facebook Messanger docs Persistent Menu 
+    const BotMenu = {
+      "setting_type": "call_to_actions",
+      "thread_state": "existing_thread",
+      "call_to_actions": [
+        {                     //Initiates a Button in the menu
+          "type": "postback", //type of response from the button
+          "title": "Delivery, Returns & Quality", //Text shown on the button and chat
+          "payload": "startFAQ"  //payload = string, sent back to the Bot
+        },
+        {
+          "type": "postback",
+          "title": "New Arrivals & Search",
+          "payload": "startfindProducts"
+        },
+        {
+          "type": "postback",
+          "title": "Promo Offers",
+          "payload": "startOffers"
+        },
+        {
+          "type": "postback",
+          "title": "Show user-test",
+          "payload": "startGPSpics"
+        },
+        {
+           "type": "web_url",
+           "title": "Go to www.ParadiseShop.eu",
+           "url": "https://paradiseshop.eu",
+           "webview_height_ratio": "full",
+           "messenger_extensions": false
+         }
+       
+        /*-Maximum number of menu items allowed 5 
+         {
+          "type": "web_url",
+          "title": "View Website",
+          "url": "https://paradiseshop.eu"
+        },
+         */
+      ]
+    };
+exports.BotMenu = BotMenu
+
+//Buttons Object for Facebook (for Tests)
+function ButtonsObj(postBackButton1, postBackButton2) {
+return {
+    attachment: {
+          type: 'template',
+          payload: {
+              template_type: 'button',
+              text: 'Melinda Here :) Choose your destiny:',
+              buttons: [postBackButton1, postBackButton2]
+        }
+      }
+    }};
+
+//End of Useful Objects for Facebook
+
+//Objects of startFAQ
+const FAQ = {
+  "delivery": "Our partners are Speedex.gr, DPD.com/ro & speedy.bg - For details on their services, please refer to corresponding service for your location. The specific service is called 'Balkan Express(202)'",
+  "returns": "We accept all returns, as long as they are purchased from us and they havent been worn, washed or modified in any way.",
+  "quality": "We have a range of fabrics. An easy way to estimate the quality is by looking at the prices. All items that cost more than 35EUR will be made of first quality materials, but if you are still unsure please ask our colleagues to aid you further.  ",
+  "why": "To make sure its all nice for you"
+};
+const Greetings = {
+  "00":"Good Evening, ",
+  "01":"Good Evening, ",
+  "02":"Good Evening, ",
+  "03":":) Early-Bird Moringing, ",
+  "04":":) Early-Bird Moringing, ",
+  "05":":) Early-Bird Moringing, ",
+  "06":"Good Morning, ",
+  "07":"Good Morning, ",
+  "08":"Good Morning, ",
+  "09":"Good Morning, ",
+  "10":"Good Morning, ",
+  "11":"Good Morning, ",
+  "12":"Good Afternoon, ",
+  "13":"Good Afternoon, ",
+  "14":"Good Afternoon, ",
+  "15":"Good Afternoon, ",
+  "16":"Good Afternoon, ",
+  "17":"Good Afternoon, ",
+  "18":"Good Evening, ",
+  "19":"Good Evening, ",
+  "20":"Good Evening, ",
+  "21":"Good Evening, ",
+  "22":"Good Evening, ",
+  "23":"Good Evening, ",
+  }
+
+
+
+
