@@ -188,7 +188,7 @@ const EveryUserSchema = new Schema({
             'nick':String,  //a short name for our customer, chosen by him/her
             'email':{type: String, required: true}, //NEEDS A CUSTOM EMAIL VALIDATOR
             'notes':{type: String, required: false}, //Random notes for the user
-            'isLoyaal':Boolean, //has >=3 net green orders(green-grey)
+            'isLoyal':Boolean, //has >=3 net green orders(green-grey)
             'isBlacklisted':Boolean, //has more gray orders than green
             'SalesAgent':[SalesAgent],
             'FBpage_id':Number, //the page ids from which the customerhas been contacting us

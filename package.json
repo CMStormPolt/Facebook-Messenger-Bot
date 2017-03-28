@@ -12,6 +12,7 @@
     "aws-sdk": "^2.5.3",
     "bluebird": "^3.4.7",
     "dashbot": "^0.7.4",
+    "date-and-time": "^0.4.0",
     "dotenv": "^4.0.0",
     "fb": "^1.1.1",
     "mongoose": "^4.8.1",
