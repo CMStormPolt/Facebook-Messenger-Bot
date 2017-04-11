@@ -49,6 +49,7 @@ if(payload !== undefined){
         return false
       }
     };
+    
 exports.BotCmdCheck = BotCmdCheck
 
 
@@ -274,6 +275,180 @@ return {
     }};
 
 //End of Useful Objects for Facebook
+
+//sasho code
+  //class for proccessing api ai action calls
+class ProccessActioner{
+  constructor(){
+  }
+  //main function calls other class methods
+  processAction(senderId,action,result){
+      if(this[action]){
+        return Promise.resolve(this[action](senderId,result))
+    } else {
+      return Promise.resolve(false);
+    }
+  } //save names to db user
+   setNames(senderId,result){
+     return MongoDB.helpers.findByFbIdAndUpdate(senderId.toString(),{'FBinfo.f_name': result.parameters.f_name,'FBinfo.l_name': result.parameters.l_name})
+   } //save city to db user
+   setCity(senderId,result){
+     return MongoDB.helpers.findByFbIdAndUpdate(senderId.toString(),{'FBinfo.living_in': result.parameters.city.city,'FBinfo.country': result.parameters.city.country});
+   } //save nickname to db user
+   setNickname(senderId,result){
+     let nickname = result.parameters.nickname;
+     if(nickname == 'first name'){
+       return new Promise(function(resolve,reject){
+        MongoDB.helpers.findUserByFbId(senderId).then(function(user){
+            user.nick = user.FBinfo.f_name;
+            user.save()
+                .then(resolve);
+         })
+       })
+     } else if(nickname == 'last name'){
+       return new Promise(function(resolve,reject){
+        MongoDB.helpers.findUserByFbId(senderId).then(function(user){
+            user.nick = user.FBinfo.l_name;
+            user.save()
+                .then(resolve);
+         })
+       })
+     } else {
+         return MongoDB.helpers.findByFbIdAndUpdate(senderId.toString(),{'nick': nickname,})
+      }
+   }
+
+   // gets the product by its code and resolves its price
+   getPriceProduct(senderId,result){
+     //gets code from context about product
+     return new Promise(function(resolve,reject){
+      let productCode = result.contexts.find(function(context){
+       return context.name = 'imagesended-followup' }).parameters.product_code;
+      let func = co(function* () {
+        let product = yield MongoDB.helpers.getProductFromDb(productCode);
+       if(product){
+         let product_price = product.prices[0].price;
+         //sends product price to api ai proccesser
+        resolve(
+          {
+          $product_price: product_price
+        });
+       }
+     })
+     func();
+     })
+   }
+   // finds product and returs its size
+   getSizeProduct(senderId,result){
+     //gets code from context about product
+     return new Promise(function(resolve,reject){
+      let productCode = result.contexts.find(function(context){
+       return context.name = 'imagesended-followup' }).parameters.product_code;
+      let func = co(function* () {
+        let product = yield MongoDB.helpers.getProductFromDb(productCode);
+       if(product){
+         let product_size = '';
+         for(let size of product.sizes){
+           product_size += (size.title + ',');
+         }
+         product_size = product_size.slice(0,-1)
+         //sends product price to api ai proccesser
+         console.log(product_size);
+        resolve(
+          {
+          $product_size: product_size
+        });
+       }
+     })
+     func();
+     })
+   }   
+   // gets names and honorifics for current user 
+    greetings(senderId,result){
+      return new Promise(function(resolve,reject){
+        let func = co(function* (){
+          let user = yield MongoDB.helpers.findUserByFbId(senderId);
+          let $mrms = 't/a';
+          if(user.FBinfo.gender == 'male'){
+            $mrms  = 'Mr'
+          } else {
+            $mrms = 'Ms'
+          }
+           resolve({
+             $f_name: user.FBinfo.f_name,
+             $l_name: user.FBinfo.l_name,
+             $mrms: $mrms
+           });
+        })
+        func();
+      })
+    }
+
+    //gets random photo of connected product and sends it to api ai
+    getRandomConnectedProductPic(senderId,result){
+      return new Promise(function(resolve,reject){
+        let func = co(function* (){
+          let code = result.parameters.product_code
+          let currentProduct = yield MongoDB.helpers.getProductFromDb(code);
+          let connectedProduct = yield MongoDB.helpers.getRandomConnectedProduct(currentProduct);
+          let randomPhoto = MongoDB.helpers.getRandomImageOfProduct(connectedProduct);
+          // console.log(randomPhoto);
+           resolve({
+             attachment: randomPhoto
+           });
+        })
+        func();
+      })
+    }
+
+
+// customize a message if custom data from bot action is presented and returs it to api ai proccessor
+   messageCustomization(message,data){
+     // if text repsonse - this customize text response
+     if(message.speech){
+    for(let variable_name in data){
+    if (message.speech.indexOf(variable_name.toString()) > 0) {
+      message.speech = message.speech.replace(variable_name.toString(),data[variable_name]);
+    }
+  }
+   } 
+   // if message is with quick replies - customize the quick replies
+    if(message.replies){
+       let message_replies_concat = message.replies.join('@@@@');
+       for(let variable_name in data){
+         message_replies_concat = message_replies_concat.replace(variable_name.toString(),data[variable_name])
+        }
+        message.replies = message_replies_concat.split('@@@@');
+       }
+     if(data.attachment){
+        console.log('data attachment customize ============================================================')
+        message = fb.imageAttachment(data.attachment)
+        message.messageType =
+      }
+      //  console.log(message);
+        return message
+   }
+  }
+module.exports.ProccessActioner = ProccessActioner;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 //Objects of startFAQ
 const FAQ = {

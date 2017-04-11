@@ -1,3 +1,5 @@
+
+
 module.exports.FakeUser = function(schemas, helpers, co){
 
 const TheUser = new schemas.User
@@ -42,7 +44,7 @@ const TheRemark = new schemas.Remark
 TheRemark.Data= 'That`s Great!'
 
 const TheSize = new schemas.Size
-TheSize.Title='S'
+TheSize.title='S'
 TheSize.quantity=7
 TheSize.fit='Classic'
 
@@ -55,7 +57,7 @@ ThePrice.EUR=31
 ThePrice.cost_price_BGN=26
 
 const TheColor = new schemas.Color
-TheColor.Title='White'
+TheColor.title='White'
 TheColor.Data='ffffff'
 TheColor.type='Color Hex'
 

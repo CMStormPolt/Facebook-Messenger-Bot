@@ -6,6 +6,7 @@ const schemas = require('./SchemaModels')
 const co = Promise.coroutine;
 const fs = Promise.promisifyAll(require('fs'))
 const http = require('http');
+const botData = require('../BotFunctions/BotData');
 
 //API response functions
 function _respond(res, next, status, data, http_code){
@@ -160,7 +161,9 @@ function addSchemaToProduct(ProductQuery, SchemaName, SchemaId){  //Product quer
                     let ProductObj = Schema
                     //console.log('Schema Id added:',Schema._id)
                     collectionObj.findOne(ProductQuery)
-                            .then((Product)=>{Product[ObjDestination].push(Schema); return Product})
+                            .then((Product)=>{
+                                Product[ObjDestination].push(Schema); return Product
+                            })
                             .then((Product)=>{Product.save();console.log('Adding '+SchemaName+' to Product with Id:',Product._id);return Product})
                             .then((Product)=>{resolve(Product)})    //injects into the Product
             })
@@ -252,30 +255,156 @@ function CreatePriceSchema(PricesArray, ProductCode){
 
 
 module.exports.CreatePictureSchemas = CreatePictureSchemas;
+//sasho code
 
+  //CreateProduct Sasho implementation (more simple);
 function CreateProduct(DataObj){
-    let NewProduct = new schemas.Product
-    const gen = co(function* (){
-                let PicLocationArray = yield SavePictures(DataObj.images, DataObj.code)
-                let PicturesIDsArray = yield CreatePictureSchemas(PicLocationArray, DataObj.code)
-                let SizesArray = DataObj.sizes
-                let PriceObj = yield CreatePriceSchema(DataObj.prices, DataObj.code)
-                NewProduct.pictures = PicturesIDsArray
-                NewProduct.sizes = SizesArray
-                NewProduct.prices = PriceObj
+    return new Promise(function(resolve,reject){
+        let NewProduct = new schemas.Product();
                 NewProduct.code = DataObj.code
-                NewProduct.title = DataObj.Title
                 NewProduct.date_added = DataObj.date_added
                 NewProduct.tags = DataObj.tags
                 NewProduct.colors = DataObj.colors
-                NewProduct.supplier = DataObj.supplier
+                NewProduct.category = DataObj.category
+                NewProduct.onsale = DataObj.onsale;
+                NewProduct.fit = DataObj.fit;
+                NewProduct.fabric_quality = DataObj.fabric_quality;
+                NewProduct.manufacturing_quality = DataObj.manufacturing_quality;
+                NewProduct.season = DataObj.season;
+                NewProduct.restockable = DataObj.restockable;
+                NewProduct.new_delivery_expected = DataObj.new_delivery_expected;
+                NewProduct.related_products = DataObj.related_products;
+                NewProduct.product_speed = DataObj.product_speed;
                 NewProduct.weight = DataObj.weight
-                NewProduct.comments = DataObj.comments
-                //console.log(NewProduct)
-                let Product = yield CreateSchema('Product', NewProduct)
-                console.log(Product._id+'Product generated: '+Product.code+'\n')
-                        })
-        gen()
+                NewProduct.sizes = DataObj.sizes;
+                NewProduct.prices = DataObj.prices;
+                NewProduct.images = DataObj.images;
+            NewProduct.save()
+                      .then(resolve)
+                      .catch(reject)
+        })
+    }
 
-}
+
+
 module.exports.CreateProduct = CreateProduct;
+
+
+
+    //creates new user and saves it to db
+function createUser(senderId,pageId){
+    return new Promise(function(resolve,reject){
+        let newUser = new schemas.User;
+        let fbinfo;
+        const gen = co(function* (){
+            fbinfo = yield botData.GetUserNames(senderId);
+            console.log(fbinfo);
+            newUser.FBpage_id = pageId;
+            newUser.FBinfo = {
+                'SenderId': senderId,
+                'f_name': fbinfo.first_name,
+                'l_name': fbinfo.last_name,
+                'gender': fbinfo.gender
+            }
+            let savedUser = yield newUser.save();
+            resolve(savedUser);
+    })
+     gen();
+    })
+}
+module.exports.createUser = createUser;
+
+
+//finds user by facebook ID
+function findUserByFbId(senderId){
+    return new Promise(function(resolve,reject){    
+      schemas.User.findOne({'FBinfo.SenderId': senderId})
+                              .then(function(dbres){
+                                  resolve(dbres);
+            });
+    })
+}
+module.exports.findUserByFbId = findUserByFbId;
+
+//checks if user is registered in db
+function proccessUser(senderId,pageId){
+    return new Promise(function(resolve,reject){
+        const func = co(function* (){
+        let isOldUser = yield findUserByFbId(senderId);
+        if (isOldUser){
+            resolve(false);
+        } else {
+           let newUser = yield createUser(senderId,pageId);
+           resolve(newUser);
+            }
+        })
+        func();
+    })
+}
+module.exports.proccessUser = proccessUser;
+
+
+//finds and updates user
+function findByFbIdAndUpdate(senderId,args){
+    return new Promise(function(resolve,reject){
+        schemas.User.update({'FBinfo.SenderId': senderId},{$set: args})
+                    .then(resolve);
+    })
+}
+module.exports.findByFbIdAndUpdate = findByFbIdAndUpdate;
+
+
+//finds total number of collection items
+function findCountFromDb(collectionName){
+    schemas[collectionName].count()
+                           .then(console.log);
+}
+module.exports.findCountFromDb = findCountFromDb;
+
+//gets single Product by product code from DB;
+function getProductFromDb(productCode){
+    return new Promise(function(resolve,reject){
+        schemas.Product.findOne({'code':productCode})
+                       .then(resolve)
+                       .catch(reject);
+    })
+}
+module.exports.getProductFromDb = getProductFromDb;
+
+//gets a random picture for a product
+function getRandomImageOfProduct(product){
+    let randomRange = product.images.length,
+        randomNumber = Math.floor(Math.random() * randomRange);
+        console.log(randomNumber)
+        return product.images[randomNumber].url;
+}
+module.exports.getRandomImageOfProduct = getRandomImageOfProduct;
+
+//gets random product in same category
+function getRandomConnectedProduct(product){
+    return new Promise(function(resolve,reject){
+          schemas.Product.find({'category': product.category})
+          .then(function(connectedProducts){
+              let len = connectedProducts.length;
+              let singleConnected =  connectedProducts[Math.floor(Math.random()*len)];
+              resolve(singleConnected);
+          })
+    })
+}
+module.exports.getRandomConnectedProduct = getRandomConnectedProduct;
+
+
+//gets a product by a posted fb picture
+function getProductByFbPic(fb_pic){
+    //  let array = fb_pic.url.split('/'), //commented for now when we get the id system going uncomment
+    //      id = array[array.length - 2]   //commented for now when we get the id system going uncomment
+          id = fb_pic.url;
+         return new Promise(function(resolve,reject){
+            schemas.Product.findOne({'images.url':id})
+                   .then(function(product){
+                       resolve(product)
+                   })
+                   .catch(reject);
+         })
+}
+module.exports.getProductByFbPic = getProductByFbPic;

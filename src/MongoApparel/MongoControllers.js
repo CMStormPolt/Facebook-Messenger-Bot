@@ -25,18 +25,16 @@ server.use(restify.throttle({  //throttles all inbound connections to
 
 
 //Load helper API Helper Functions
+// const schemas = require('./SchemaModels.js')
 const helpers = require('./APIhelperFunctions')
-const schemas = require('./SchemaModels.js')
 const mongoose = require('mongoose')
 mongoose.Promise = require('bluebird');
 const Promise = require('bluebird')
 
 const UserModel = mongoose.model('User')
 const ProductModel = mongoose.model('Product')
-// console.log(UserModel)
-// console.log(UserModel.UserModel)
-module.exports.Webhooks = function Webhooks(server, log){
 
+module.exports.Webhooks = function Webhooks(server, log){
 
     //Retrieve all user - temporarily on
     server.post('/clientAPI/:cmd', (req, res, next) => {
@@ -61,9 +59,9 @@ module.exports.Webhooks = function Webhooks(server, log){
             helpers.success(res, next, user)
             console.log('User data retrieved and sent')
          })
-         
     })
     //Retrieve a single product
+
     server.get('/product/:code', (req, res, next) => {
         ProductModel.findOne({code:req.params.code}, (err, product)=>{
             if(product === undefined){
@@ -75,16 +73,13 @@ module.exports.Webhooks = function Webhooks(server, log){
          
     })
         //Recieve a single Product
-    server.post('/product/', (req, res, next) => {
-        ProductModel.findOne({code:req.params.code}, (err, Product)=>{
-            //console.log(Product)
-            if(Product === null){helpers.CreateProduct(req.params)
-                        setTimeout(()=>helpers.success(res, next, req.params.code),2000)}
-            else{
-            helpers.failure(res, next, 'Product code already exists',409)
-            console.log('Product '+req.params.code+' already exists')
-        }
-         })
+    server.post('/product', (req, res, next) => {
+        let array = req.body;
+            array.forEach(function(product,index){
+                helpers.CreateProduct(product)
+                console.log(product)
+            })
+        res.send('Let\'s see if it works...');
     })
 
     //Update an user

@@ -43,7 +43,10 @@ let processMessagesFromApiAi = co(function* (apiaiResponse, senderID) {
                 log.error("Unknown message type", { module: "botstack:fb "});
                 break;
         };
-        yield reply(replyMessage, senderID);
+        if(replyMessage){
+            yield reply(replyMessage, senderID);
+        }
+        
     }
 });
 
@@ -102,11 +105,11 @@ function quickReply(apiai_qr) {
     let quick_replies = [];
 
     for (let repl of apiai_qr.replies) {
-        let payload = 'BOT_'+repl.replace(/\'/g,"").replace(/\:/g,"").replace(/\)/g,"").trim().replace(/ /g,"_")
+        // let payload = 'BOT_'+ repl.replace(/\'/g,"").replace(/\:/g,"").replace(/\)/g,"").trim().replace(/ /g,"_")
         quick_replies.push({
             "content_type": "text",
             "title": repl,
-            "payload": payload
+            "payload": repl
         });
     }
 
@@ -216,9 +219,9 @@ let setThreadSettings = co(function* (data, method) {
     try {
         let response = yield rp(reqData);
         if (response.statusCode == 200) {
-            log.debug("Sent settings to Facebook", {
-                module: "botstack:fb"
-            });
+            // log.debug("Sent settings to Facebook", {
+            //     module: "botstack:fb"
+            // });
             return response.body;
         } else {
             log.error("Error in Facebook response", {
@@ -235,9 +238,9 @@ let setThreadSettings = co(function* (data, method) {
 });
 
 function greetingText(text) {
-    log.debug("Sending greeting text", {
-        module: "botstack:fb"
-    });
+    // log.debug("Sending greeting text", {
+    //     module: "botstack:fb"
+    // });
     let data = {
         setting_type: "greeting",
         greeting: {
@@ -249,9 +252,9 @@ function greetingText(text) {
 
 function getStartedButton(payload) {
     payload = typeof(payload) !== 'undefined' ? payload: "Get Started";
-    log.debug("Sending started button", {
-        module: "botstack:fb"
-    });
+    // log.debug("Sending started button", {
+    //     module: "botstack:fb"
+    // });
     let data = {
         setting_type: "call_to_actions",
         thread_state: "new_thread",
@@ -267,9 +270,9 @@ function getStartedButton(payload) {
  { type: "postback", title: "Help", payload: "Help" }]
 */
 function persistentMenu(call_to_actions) {
-    log.debug("Sending persistent menu settings", {
-        module: "botstack:fb"
-    });
+    // log.debug("Sending persistent menu settings", {
+    //     module: "botstack:fb"
+    // });
     let data = {
         setting_type: "call_to_actions",
         thread_state: "existing_thread",
@@ -279,9 +282,9 @@ function persistentMenu(call_to_actions) {
 }
 
 function deletePersistentMenu() {
-    log.debug("Delete persistent menu settings", {
-        module: "botstack:fb"
-    });
+    // log.debug("Delete persistent menu settings", {
+    //     module: "botstack:fb"
+    // });
     let data = {
         setting_type: "call_to_actions",
         thread_state: "existing_thread"
@@ -392,9 +395,9 @@ function genericMessage() {
 
 //--------------------------------------------------------------------------------
 const reply = co(function* (message, senderId) {
-if(message.text){
-message = yield BotData.AppropriateRespect(message,senderId)
-}
+// if(message.text){
+// message = yield BotData.AppropriateRespect(message,senderId)
+// }
     if (message == null) {
         log.debug("This message ignored to send", {
             module: "botstack:fb",
@@ -450,6 +453,32 @@ message = yield BotData.AppropriateRespect(message,senderId)
     });
     return deferred.promise;
 })
+
+function testFbGraph(){
+    let reqData = {
+        url: 'https://graph.facebook.com/423878927972201',
+        qs: {
+            access_token: process.env.FB_PAGE_ACCESS_TOKEN
+        },
+        method: 'GET',
+        // json: {
+        //     recipient: {
+        //         id: senderId
+        //     },
+        //     message: message
+        // }
+    };
+    request(reqData,function(err,response,body){
+        if(err){
+            console.log(err)
+        } else {
+            console.log(response)
+        }
+    })
+}
+
+
+
 //--------------------------------------------------------------------------------
 exports.processMessagesFromApiAi = processMessagesFromApiAi;
 exports.textMessage = textMessage;
@@ -464,3 +493,7 @@ exports.greetingText = greetingText;
 exports.getStartedButton = getStartedButton;
 exports.persistentMenu = persistentMenu;
 exports.imageReply = imageReply;
+
+//sasho stuff
+
+exports.testFbGraph = testFbGraph;

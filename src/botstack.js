@@ -72,37 +72,40 @@ class BotStack {
         this.MongoDB = MongoDB
 
         if (Object.keys(conf).length == 0) {
-            log.debug("Started with default config (no configuration file found)", { module: "botstack:constructor"});
+            // log.debug("Started with default config (no configuration file found)", { module: "botstack:constructor"});
         } else {
-            log.debug("Custom config file loaded", { module: "botstack:constructor"});
+            // log.debug("Custom config file loaded", { module: "botstack:constructor"});
         }
 
         if ('getStartedButtonText' in conf) {
             this.fb.getStartedButton(conf.getStartedButtonText).then(x => {
-                log.debug("Started button done", { module: "botstack:constructor", result: x.result});
+                // log.debug("Started button done", { module: "botstack:constructor", result: x.result});
             });
         } else {
             this.fb.getStartedButton().then(x => {
-                log.debug("Started button done", { module: "botstack:constructor", result: x.result});
+                // log.debug("Started button done", { module: "botstack:constructor", result: x.result});
             });
         };
 
         if ('persistentMenu' in conf) {
             this.fb.persistentMenu(conf.persistentMenu).then(x => {
-                log.debug("Persistent menu done", { module: "botstack:constructor", result: x.result});
+                // log.debug("Persistent menu done", { module: "botstack:constructor", result: x.result});
             })
         };
 
         if ('welcomeText' in conf) {
             this.fb.greetingText(conf.welcomeText).then(x => {
-                log.debug("Welcome text done", { module: "botstack:constructor", result: x.result});
+                // log.debug("Welcome text done", { module: "botstack:constructor", result: x.result});
             })
         };
 
         this.server.get('/abc', (req, res, next) => {
             res.send('Nothing to see here...');
         });
-
+        // this.server.post('/product', (req, res, next) => {
+        //     console.log(req.body);
+        //     res.send('Nothing to see here...');
+        // });
         this.server.get('/webhook/', (req, res, next) => {
             let token = req.query.hub.verify_token;
             if (token === process.env.FB_VERIFY_TOKEN) {
@@ -171,75 +174,61 @@ class BotStack {
     _webhookPost(context) {
         let self = context;
         return function(req, res, next) {
+            
             co(function* (){
                 res.end();
                 let entries = req.body.entry;
                 for (let entry of entries) {
                     let messages = entry.messaging;
+                    let pageId = entry.id;
                     for (let message of messages) {
+                        console.log(message.message);
                         let senderID = message.sender.id;
+                        //check reddis if new session
                         let isNewSession = yield sessionStore.checkExists(senderID);
+                        //if new session check mongo if user exist
+                        // if(isnewSession){
+                        //     let userProccessed = yield self.MongoDB.helpers.proccessUser(senderID,pageId);
+                        // }
+                        let userToBeProccessed = yield self.MongoDB.helpers.proccessUser(senderID,pageId);                        
                         const isPostbackMessage = message.postback ? true : false;
-                        let isQuickReplyCommand = false
+                        let isQuickReply = false
                         if (message.message){
                             if(message.message.quick_reply){
-                            isQuickReplyCommand = BotData.BotCommands.indexOf(message.message.quick_reply.payload) !== -1
+                            isQuickReply = true
                                 }}
                         let isTextMessage = false;
-                        if ('message' in message && 'text' in message.message && !(isQuickReplyCommand)) {
+                        if ('message' in message && 'text' in message.message && !(isQuickReply)) {
                             isTextMessage = true;
                         }
                         yield sessionStore.set(senderID);
                         if (isTextMessage) {
-                            if (message.message.text == "Get Started") {
+                            if (userToBeProccessed) {
                                 self.welcomeMessage(message.message.text, senderID);
                             } else {
                                 self.textMessage(message, senderID);
                             }
                         } else if (isPostbackMessage) {
-                            if (message.postback.payload == "Get Started") {
+                            if (userToBeProccessed) {
                                 self.welcomeMessage(message.postback.payload, senderID);
                             } else {
                                 self.postbackMessage(message, senderID);
                             }
-                        } else if (isQuickReplyCommand) {
+                        } else if (isQuickReply) {
                                 self.QuickReplyCommand(message.message, senderID);
+                            }
+                            else if (message.message.attachments){
+                                self.imageProccess(message.message.attachments,senderID);
                             }
                         else {
                             self.fallback(message, senderID);
                         }
+                     
                     }
                 }
             })();
         }
     }
-
-    welcomeMessage(messageText, senderID) {
-        botmetrics.logUserRequest(messageText, senderID);
-        log.debug("Process welcome message", {
-            module: "botstack:welcomeMessage",
-            senderId: senderID
-        });
-        co(function* (){
-            try {
-                let apiaiResp = yield apiai.processEvent("FACEBOOK_WELCOME", senderID);
-                log.debug("Facebook welcome result", {
-                    module: "botstack:welcomeMessage",
-                    senderId: senderID
-                });
-                fb.processMessagesFromApiAi(apiaiResp, senderID);
-                botmetrics.logServerResponse(apiaiResp, senderID);
-            } catch (err) {
-                log.error(err, {
-                    module: "botstack:welcomeMessage",
-                    senderId: senderID,
-                    reason: "Error in API.AI response"
-                });
-                fb.reply(fb.textMessage("I'm sorry, I didn't understand that"), senderID);
-                botmetrics.logServerResponse(err, senderID);
-            }
-        })();
-    };
 
     postbackMessage(postback, senderID) {
         co(function* () {
@@ -256,11 +245,12 @@ class BotStack {
                 senderId: senderID,
                 text: text
             });
-            //Diverts normal API.ai query to executing internal ParadiseBot commands
-            if (BotData.BotCmdCheck(postback, senderID) == true) {
-                console.log('\n REMARK-ParadiseBot: ' + postback.postback.payload + '()'+' was executed internally \n')
-                }
-            else try {
+            //Diverts normal API.ai query to executing internal ParadiseBot commands DISCLAIMER: not used right now
+            // if (BotData.BotCmdCheck(postback, senderID) == true) {
+            //     console.log('\n REMARK-ParadiseBot: ' + postback.postback.payload + '()'+' was executed internally \n')
+            // }
+            // else 
+            try {
                 let apiaiResp = yield apiai.processTextMessage(text, senderID);
                 fb.processMessagesFromApiAi(apiaiResp, senderID);
                 botmetrics.logServerResponse(apiaiResp, senderID);
@@ -292,10 +282,10 @@ class BotStack {
                 text: text
             });
             //Diverts normal API.ai query to executing internal ParadiseBot commands
-            if (BotData.BotCmdCheck(postback, senderID) == true) {
-                console.log('\n REMARK-ParadiseBot: ' + postback.quick_reply.payload + '()'+' was executed internally \n')
-                }
-            else try {
+            // if (BotData.BotCmdCheck(postback, senderID) == true) {
+            //     console.log('\n REMARK-ParadiseBot: ' + postback.quick_reply.payload + '()'+' was executed internally \n')
+            // } else
+             try {
                 let apiaiResp = yield apiai.processTextMessage(text, senderID);
                 fb.processMessagesFromApiAi(apiaiResp, senderID);
                 botmetrics.logServerResponse(apiaiResp, senderID);
@@ -310,6 +300,68 @@ class BotStack {
             }
         })();
     };
+
+    welcomeMessage(messageText, senderID) {
+        botmetrics.logUserRequest(messageText, senderID);
+        log.debug("Process welcome message", {
+            module: "botstack:welcomeMessage",
+            senderId: senderID
+        });
+        co(function* (){
+            let text = 'Hi, I am a new User'
+            try {
+                let apiaiResp = yield apiai.processTextMessage(text, senderID);
+                log.debug("Facebook welcome result", {
+                    module: "botstack:welcomeMessage",
+                    senderId: senderID
+                });
+                fb.processMessagesFromApiAi(apiaiResp, senderID);
+                botmetrics.logServerResponse(apiaiResp, senderID);
+            } catch (err) {
+                log.error(err, {
+                    module: "botstack:welcomeMessage",
+                    senderId: senderID,
+                    reason: "Error in API.AI response"
+                });
+                fb.reply(fb.textMessage("I'm sorry, I didn't understand that"), senderID);
+                botmetrics.logServerResponse(err, senderID);
+            }
+        })();
+    };
+
+    imageProccess(image, senderID) {
+        // console.log(image);
+        log.debug("Process Image message", {
+            module: "botstack:imageMessage",
+            senderId: senderID
+        });
+        co(function* (){
+            let product = yield MongoDB.helpers.getProductByFbPic(image)
+            console.log(product);
+            if(product){             
+            try {
+                let text = `Image sended ${product.code}`;
+                let apiaiResp = yield apiai.processTextMessage(text, senderID);
+                log.debug("Facebook image result", {
+                    module: "botstack:imageProccess",
+                    senderId: senderID
+                });
+                fb.processMessagesFromApiAi(apiaiResp, senderID);
+                botmetrics.logServerResponse(apiaiResp, senderID);
+            } catch (err) {
+                log.error(err, {
+                    module: "botstack:welcomeMessage",
+                    senderId: senderID,
+                    reason: "Error in API.AI response"
+                });
+                fb.reply(fb.textMessage("I'm sorry, I didn't understand that"), senderID);
+                botmetrics.logServerResponse(err, senderID);
+            }
+        }
+        })();
+    };
+
+
 
     fallback(message, senderID) {
         log.debug("Unknown message", {
@@ -336,3 +388,22 @@ class BotStack {
     }
 }
 module.exports = BotStack;
+     
+     
+     
+     
+     
+     
+     
+     
+     
+     
+     
+     
+     
+     
+     
+     
+     
+     
+

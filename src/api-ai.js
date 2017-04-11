@@ -8,6 +8,9 @@ const APIAI_ACCESS_TOKEN = process.env.APIAI_ACCESS_TOKEN;
 const APIAI_LANG = "en";
 const apiAiService = apiai(APIAI_ACCESS_TOKEN);
 
+const ProccessActioner = require('./BotFunctions/BotData').ProccessActioner;
+let proccesser = new ProccessActioner();
+
 function isDefined(obj) {
     if (typeof obj == 'undefined') {
         return false;
@@ -111,20 +114,41 @@ let processTextMessage = co(function* (message, senderId) {
                 let responseText = response.result.fulfillment.speech;
                 let responseData = response.result.fulfillment.data;
                 let messages = response.result.fulfillment.messages;
-                let action = response.result.action;
-                if (isDefined(responseData) && isDefined(responseData.facebook)) {
+                let action = response.result.action;    
+                let proccessData = {};           
+                // console.log(action);
+                // checks for api ai action and executes it 
+                    co(function* (){ 
+                        if(action){
+                           proccessData =  yield proccesser.processAction(senderId,action,response.result)
+                        //    console.log('here ===============================================')
+                        //    console.log(proccessData);
+                              customized_messages = []
+                              for(let message of messages){
+                              message = proccesser.messageCustomization(message,proccessData);
+                              customized_messages.push(message);
+                           }
+                     }  
+                    if (isDefined(responseData) && isDefined(responseData.facebook)) {
                     log.debug("Response as formatted message", {
                         module: "botstack:api-ai",
                         senderId: senderId
                     });
                     resolve(null);
                 } else if (isDefined(messages)) {
+                    console.log('api ai ==============================================================================')
+                    // console.log(messages);
+                    let messages_to_send = messages
+                    if(customized_messages){
+                        messages_to_send = customized_messages
+                    } 
                     let returnData = {
-                        messages: messages,
+                        messages: messages_to_send,
                         response: response
                     };
                     resolve(returnData);
-                }
+                     }
+                 })()
             }
         });
 
@@ -140,7 +164,8 @@ let processTextMessage = co(function* (message, senderId) {
     });
 
     let result = yield apiaiResponse;
-    return apiaiResponse;
+    // return apiaiResponse;
+    return result;
 });
 
 exports.processTextMessage = processTextMessage;

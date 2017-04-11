@@ -11,12 +11,9 @@ const {Schema} = mongoose
         module.exports.Remark = mongoose.model('Remark', Remark);
 
                 const Size = new Schema({ //creates a new size object for the products db
-                                'Size_id':Number,
                                 'title':{type: String, required: true},  //The title of the address object
                                 'quantity':{type: Number, required: true}, //how many items we have from this particular size of the set product
-                                'fit':{type: String, required: false}, //Fitted, Classic Fit, Loose Fit  
-                                'description':{type: String, required: false},
-                                'dimentions':[Number, Number, Number], //the particular dimentions of this size of the prodcut. for ex. top lenght/chest/trousers
+                                'dimensions':{type: String}, //the particular dimentions of this size of the prodcut. for ex. top lenght/chest/trousers
                         })
         module.exports.Size = mongoose.model('Size', Size);
 
@@ -38,14 +35,10 @@ const {Schema} = mongoose
                         })
         module.exports.Interaction = mongoose.model('Interaction', Interaction);
        
-       const Picture = new Schema({  // use this to add a picture to the db
-                                    'Picture_id':Number, //global picture ids list
-                                    'date':{type:Date, default: Date.now}, //date of 
-                                    'isBranded':{type: Boolean,default: true, required: true},
-                                    'notes':String,
-                                    'location':String,
+       const Image = new Schema({  // use this to add a picture to the db
+                        url:{type:String}
                                 })
-        module.exports.Picture = mongoose.model('Picture', Picture);
+        module.exports.Image = mongoose.model('Image', Image);
 
         const Cart = new Schema({
                             'Cart_id':Number, // Global __shopping cart Id
@@ -105,15 +98,10 @@ const {Schema} = mongoose
 
 
         const Price = new Schema({ //creates a new size object for the products db
-                                'Price_id':Number,
-                                'BGN':{type: Number, required: false},  //The title of the address object
-                                'EUR':{type: Number, required: true},
-                                'RON':{type: Number, required: false},
-                                'USD':{type: Number, required: false},
-                                'cost_price_EUR':{type: Number, required: false}, // delivery price
-                                'cost_price_BGN':{type: Number, required: false}, // delivery price
-
-                        })
+                        price:{type: Number},
+                        country:{type: String},
+                        currency:{type: String}
+                })          
         module.exports.Price = mongoose.model('Price', Price);
 
         const Color = new Schema({ //creates a new color object for the products db
@@ -125,22 +113,25 @@ const {Schema} = mongoose
         module.exports.Color = mongoose.model('Color', Color);
 
         const Product = new Schema({
-                'Product_id':{type: Number, required: false},
-                'title':{type: String, required: false},  //The title of the product object
                 'code':{type: String, required: true},
-                'season':String, //winter fabric or summer fabrics?
-                'quality':String, //ranging from: Not-satisfactory, average, good, excellent
+                'date_added':{type:Date, default: Date.now},
                 'tags':{type: String, required: false}, //for ex. brand, style, type of clothing, etc.
-                'colors':String, //Color tags for the color filter
-                'supplier':{type: String, required: false},
+                'fit':{type:String},
+                'colors':{type:String}, //Color tags for the color filter
+                'category':{type:String},
+                'onsale':{type:String,default: ''},
+                'fabric_quality':{type:String}, //ranging from: Not-satisfactory, average, good, excellent
+                'manufacturing_quality':{type:String},
+                'season':{type:String}, //winter fabric or summer fabrics?
+                'restockable':{type:Boolean},
+                'new_delivery_expected':{type:Boolean},
+                'related_products':{type:String},
+                'product_speed':'',
                 'weight':{type: Number, required: false}, // weight of a single product in kgs
-                'pictures':[Picture], //Stores available pictures
                 'sizes':[Size],  //Stores sizes and quantities
-                'total_quantity':Number, //A sum of the quantities of each of the available sizes
                 'prices':[Price], //takes only a Price object
-                'comments':String, //any additional comments
-                'default_wholesale_pack':String, //for ex. 4 in 1,S-XL
-                'date_added':{type:Date, default: Date.now}
+                'images':[Image], //Stores available pictures
+                'product_id':{type: Number, required: false},
                 })
         module.exports.Product = mongoose.model('Product', Product);
 
@@ -183,15 +174,15 @@ const EveryUserSchema = new Schema({
                             type: Number, //the type of content that will be held by this object
                             required: false, //will throw an err if the field is not supplied
                         },
-            'f_name':{type: String, required: true},
-            'l_name':{type: String, required: true},
+            'f_name':{type: String},
+            'l_name':{type: String},
             'nick':String,  //a short name for our customer, chosen by him/her
-            'email':{type: String, required: true}, //NEEDS A CUSTOM EMAIL VALIDATOR
+            'email':{type: String}, //NEEDS A CUSTOM EMAIL VALIDATOR
             'notes':{type: String, required: false}, //Random notes for the user
             'isLoyal':Boolean, //has >=3 net green orders(green-grey)
             'isBlacklisted':Boolean, //has more gray orders than green
             'SalesAgent':[SalesAgent],
-            'FBpage_id':Number, //the page ids from which the customerhas been contacting us
+            'FBpage_id':{type: String,required: true}, //the page ids from which the customerhas been contacting us
             'validation':{ //records which validations have been completed for the user
                         'email':{type:Boolean, default:false},
                         'telephone':{type:Boolean, default:false},
@@ -210,16 +201,18 @@ const EveryUserSchema = new Schema({
                         'inbetween_orders_time_avg':Number, //in days
                         },
             'FBinfo':{
-                    'SenderId':Number, //the user's global facebook Id.
+                    'SenderId':{type: String}, //the user's global facebook Id.
                     'f_name':{type: String, required: false},
                     'l_name':{type: String, required: false},
+                    'gender':{type: String},
                     'birthday':Date,
                     'home_town':String,  //a city
-                    'living_in':String,  //a city
+                    'living_in':{type: String},  //a city
+                    'country': {type: String},
                     'followers':Number,
                     'age':Number,
-                    'profile_pic':[Picture], //collects an array of the profile pics of our customers
-                    'cover_pic':[Picture], //collects an array of the cover pics of our customers
+                    'profile_pic':[Image], //collects an array of the profile pics of our customers
+                    'cover_pic':[Image], //collects an array of the cover pics of our customers
                     'email':{type: String},
                     },
             'postal_addresses':[Address], // A collection of all addresses used by the customer

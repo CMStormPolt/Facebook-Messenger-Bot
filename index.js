@@ -7,9 +7,9 @@ const ParaBot = new BotStack('ParaBot')
 ParaBot.startServer()
 
 
-module.exports = require('./src/botstack.js');
-module.exports = require('./src/BotFunctions/ParadiseBot.js');
-module.exports = require('./src/MongoApparel/MongoDB.js');
+// module.exports = require('./src/botstack.js');
+// module.exports = require('./src/BotFunctions/ParadiseBot.js');
+// module.exports = require('./src/MongoApparel/MongoDB.js');
 
 
 
