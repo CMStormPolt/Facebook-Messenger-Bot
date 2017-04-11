@@ -337,12 +337,11 @@ class BotStack {
         })();
     };
 
-<<<<<<< HEAD
-    imageProccess(image, senderID) {
-=======
+
+
     imageProccess(image, senderID) { //Processing an images sent from the SenderID
         // console.log(image);
->>>>>>> eb2557ea7ee058a2cdaf8122503835724e3e57f6
+
         log.debug("Process Image message", {
             module: "botstack:imageMessage",
             senderId: senderID
@@ -372,8 +371,6 @@ class BotStack {
         }
         })();
     };
-
-
 
     fallback(message, senderID) {
         log.debug("Unknown message", {

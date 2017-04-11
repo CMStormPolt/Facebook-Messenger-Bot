@@ -453,20 +453,14 @@ class ProccessActioner{
         }
         message.replies = message_replies_concat.split('@@@@'); //Splitting the string back to an array
        }
-<<<<<<< HEAD
+
      if(message.speech == 'this message will be redacted'){
         message = {};
         message.attachment = fb.imageAttachment(data.attachment)
         message.attachment.type = 'image';
         message.quick_replies = fb.quickReplyMaker(['product detail','next','add to wish list'])
         message.type = 5;
-=======
-     if(data.attachment){
-        console.log('data attachment customize ============================================================')
-        message = fb.imageAttachment(data.attachment)
-        //message.messageType =
->>>>>>> eb2557ea7ee058a2cdaf8122503835724e3e57f6
-      }
+     }
         return message
     }
   }
