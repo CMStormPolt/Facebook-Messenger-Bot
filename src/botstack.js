@@ -178,49 +178,57 @@ class BotStack {
             co(function* (){
                 res.end();
                 let entries = req.body.entry;
+                //Gathering Data
                 for (let entry of entries) {
                     let messages = entry.messaging;
                     let pageId = entry.id;
                     for (let message of messages) {
                         console.log(message.message);
                         let senderID = message.sender.id;
-                        //check reddis if new session
+                        //check Reddis if New Session
                         let isNewSession = yield sessionStore.checkExists(senderID);
-                        //if new session check mongo if user exist
-                        // if(isnewSession){
-                        //     let userProccessed = yield self.MongoDB.helpers.proccessUser(senderID,pageId);
-                        // }
-                        let userToBeProccessed = yield self.MongoDB.helpers.proccessUser(senderID,pageId);                        
+                                                    //if new session check mongo if User Exist
+                                                    // if(isnewSession){
+                                                    //     let userProccessed = yield self.MongoDB.helpers.proccessUser(senderID,pageId);
+                                                    // }
+                        let userToBeProccessed = yield self.MongoDB.helpers.proccessUser(senderID,pageId); //Temporarily for testing as if we are a new user                        
                         const isPostbackMessage = message.postback ? true : false;
+                        //Checks if message is a Quick Reply
                         let isQuickReply = false
                         if (message.message){
                             if(message.message.quick_reply){
                             isQuickReply = true
                                 }}
+                        //Check if message is a Text-Only msg
                         let isTextMessage = false;
                         if ('message' in message && 'text' in message.message && !(isQuickReply)) {
                             isTextMessage = true;
                         }
-                        yield sessionStore.set(senderID);
-                        if (isTextMessage) {
+                        yield sessionStore.set(senderID); //Set Facebook ID in Redis session
+
+                        // Processing of the data
+                        if (isTextMessage) { //Process Text-Only-Message
                             if (userToBeProccessed) {
                                 self.welcomeMessage(message.message.text, senderID);
                             } else {
                                 self.textMessage(message, senderID);
                             }
-                        } else if (isPostbackMessage) {
+
+                        } else if (isPostbackMessage) { //Process PostbackMessage
                             if (userToBeProccessed) {
                                 self.welcomeMessage(message.postback.payload, senderID);
                             } else {
                                 self.postbackMessage(message, senderID);
                             }
-                        } else if (isQuickReply) {
+
+                        } else if (isQuickReply) { //Quick Reply
                                 self.QuickReplyCommand(message.message, senderID);
                             }
-                            else if (message.message.attachments){
+                            else if (message.message.attachments){ //TOVA IZGLEJDA BUGAVO!! - Danny
                                 self.imageProccess(message.message.attachments,senderID);
                             }
-                        else {
+
+                        else {  //If everything fails Fallback
                             self.fallback(message, senderID);
                         }
                      
@@ -230,7 +238,7 @@ class BotStack {
         }
     }
 
-    postbackMessage(postback, senderID) {
+    postbackMessage(postback, senderID) { //Used processing Postback Buttons from Facebook Messenger
         co(function* () {
             let text = postback.postback.payload;
             log.debug("Process postback", {
@@ -266,18 +274,18 @@ class BotStack {
         })();
     };
 
-    QuickReplyCommand(postback, senderID) {
+    QuickReplyCommand(postback, senderID) { //Used processing QuickReply Buttons from Facebook Messenger
         co(function* () {
             let text = postback.quick_reply.payload;
-            log.debug("Process postback", {
-                module: "botstack:postbackMessage",
+            log.debug("Process QuickReply", {
+                module: "botstack:QuickReply",
                 senderId: senderID,
                 postback: postback,
                 text: text
             });
             botmetrics.logUserRequest(text, senderID);
             log.debug("Sending to API.AI", {
-                module: "botstack:postbackMessage",
+                module: "botstack:QuickReply",
                 senderId: senderID,
                 text: text
             });
@@ -291,24 +299,24 @@ class BotStack {
                 botmetrics.logServerResponse(apiaiResp, senderID);
             } catch (err) {
                 log.error(err, {
-                    module: "botstack:postbackMessage",
+                    module: "botstack:QuickReply",
                     senderId: senderID,
-                    reason: "Error in API.AI response"
+                    reason: "Error in API.AI QuickReply response"
                 });
-                fb.reply(fb.textMessage("I'm sorry, I didn't understand that"), senderID);
+                fb.reply(fb.textMessage("I'm sorry, I didn't understand that QuickReply"), senderID);
                 botmetrics.logServerResponse(err, senderID);
             }
         })();
     };
 
-    welcomeMessage(messageText, senderID) {
+    welcomeMessage(messageText, senderID) { //Initiates the NewUser Routine from API.ai
         botmetrics.logUserRequest(messageText, senderID);
-        log.debug("Process welcome message", {
+        log.debug("Initiates the NewUser Routine from API.ai", {
             module: "botstack:welcomeMessage",
             senderId: senderID
         });
         co(function* (){
-            let text = 'Hi, I am a new User'
+            let text = 'Hi, I am a new User' //API.ai Routine init text
             try {
                 let apiaiResp = yield apiai.processTextMessage(text, senderID);
                 log.debug("Facebook welcome result", {
@@ -329,7 +337,12 @@ class BotStack {
         })();
     };
 
+<<<<<<< HEAD
     imageProccess(image, senderID) {
+=======
+    imageProccess(image, senderID) { //Processing an images sent from the SenderID
+        // console.log(image);
+>>>>>>> eb2557ea7ee058a2cdaf8122503835724e3e57f6
         log.debug("Process Image message", {
             module: "botstack:imageMessage",
             senderId: senderID

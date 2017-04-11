@@ -400,6 +400,40 @@ class ProccessActioner{
       })
     }
 
+    //gets random photo of connected product and sends it to api ai
+    getRandomNewArrivalsProductPic(senderId,result){
+      //Setup dates for the Mongoose query for new arrivals
+        var now = new Date()
+
+          if (new Date().getMonth()<2){
+              var lastYear =  (new Date().getYear()-1)
+          }
+          else {var lastYear =  new Date().getYear()};
+
+        var lastMonth = (new Date().getMonth()-1)%12
+        var lastMonthDate = new Date().getDate() //Same day of tyhe month as today
+
+        var NewArrivalsDate = new Date()
+              NewArrivalsDate.setYear(lastYear)
+              NewArrivalsDate.setMonth(lastMonth)
+              NewArrivalsDate.setDate(lastMonthDate)
+              //END of Setup dates for the Mongoose query for new arrivals
+
+      return new Promise(function(resolve,reject){
+        let func = co(function* (){
+          let code = result.parameters.product_code
+          let currentProduct = yield MongoDB.helpers.getProductFromDb(code);
+          let connectedProduct = yield MongoDB.helpers.getRandomConnectedProduct(currentProduct);
+          let randomPhoto = MongoDB.helpers.getRandomImageOfProduct(connectedProduct);
+          // console.log(randomPhoto);
+           resolve({
+             attachment: randomPhoto
+           });
+        })
+        func();
+      })
+    }
+
 
 // customize a message if custom data from bot action is presented and returs it to api ai proccessor
    messageCustomization(message,data){
@@ -413,18 +447,25 @@ class ProccessActioner{
    } 
    // if message is with quick replies - customize the quick replies
     if(message.replies){
-       let message_replies_concat = message.replies.join('@@@@');
+       let message_replies_concat = message.replies.join('@@@@'); //joining the strings to process the string without a loop
        for(let variable_name in data){
          message_replies_concat = message_replies_concat.replace(variable_name.toString(),data[variable_name])
         }
-        message.replies = message_replies_concat.split('@@@@');
+        message.replies = message_replies_concat.split('@@@@'); //Splitting the string back to an array
        }
+<<<<<<< HEAD
      if(message.speech == 'this message will be redacted'){
         message = {};
         message.attachment = fb.imageAttachment(data.attachment)
         message.attachment.type = 'image';
         message.quick_replies = fb.quickReplyMaker(['product detail','next','add to wish list'])
         message.type = 5;
+=======
+     if(data.attachment){
+        console.log('data attachment customize ============================================================')
+        message = fb.imageAttachment(data.attachment)
+        //message.messageType =
+>>>>>>> eb2557ea7ee058a2cdaf8122503835724e3e57f6
       }
         return message
     }
