@@ -392,7 +392,6 @@ class ProccessActioner{
           let currentProduct = yield MongoDB.helpers.getProductFromDb(code);
           let connectedProduct = yield MongoDB.helpers.getRandomConnectedProduct(currentProduct);
           let randomPhoto = MongoDB.helpers.getRandomImageOfProduct(connectedProduct);
-          // console.log(randomPhoto);
            resolve({
              attachment: randomPhoto
            });
@@ -420,14 +419,15 @@ class ProccessActioner{
         }
         message.replies = message_replies_concat.split('@@@@');
        }
-     if(data.attachment){
-        console.log('data attachment customize ============================================================')
-        message = fb.imageAttachment(data.attachment)
-        message.messageType =
+     if(message.speech == 'this message will be redacted'){
+        message = {};
+        message.attachment = fb.imageAttachment(data.attachment)
+        message.attachment.type = 'image';
+        message.quick_replies = fb.quickReplyMaker(['product detail','next','add to wish list'])
+        message.type = 5;
       }
-      //  console.log(message);
         return message
-   }
+    }
   }
 module.exports.ProccessActioner = ProccessActioner;
 

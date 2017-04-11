@@ -8,7 +8,7 @@
         {
           "type": "postback",
           "title": "Best sellers & search",
-          "payload": "startfindProducts"
+          "payload": "Best sellers & search"
         },
         {
           "type": "postback",

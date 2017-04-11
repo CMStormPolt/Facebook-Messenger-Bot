@@ -375,7 +375,6 @@ module.exports.getProductFromDb = getProductFromDb;
 function getRandomImageOfProduct(product){
     let randomRange = product.images.length,
         randomNumber = Math.floor(Math.random() * randomRange);
-        console.log(randomNumber)
         return product.images[randomNumber].url;
 }
 module.exports.getRandomImageOfProduct = getRandomImageOfProduct;

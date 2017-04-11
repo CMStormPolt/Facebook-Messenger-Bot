@@ -330,7 +330,6 @@ class BotStack {
     };
 
     imageProccess(image, senderID) {
-        // console.log(image);
         log.debug("Process Image message", {
             module: "botstack:imageMessage",
             senderId: senderID
