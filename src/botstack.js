@@ -178,49 +178,57 @@ class BotStack {
             co(function* (){
                 res.end();
                 let entries = req.body.entry;
+                //Gathering Data
                 for (let entry of entries) {
                     let messages = entry.messaging;
                     let pageId = entry.id;
                     for (let message of messages) {
                         console.log(message.message);
                         let senderID = message.sender.id;
-                        //check reddis if new session
+                        //check Reddis if New Session
                         let isNewSession = yield sessionStore.checkExists(senderID);
-                        //if new session check mongo if user exist
-                        // if(isnewSession){
-                        //     let userProccessed = yield self.MongoDB.helpers.proccessUser(senderID,pageId);
-                        // }
-                        let userToBeProccessed = yield self.MongoDB.helpers.proccessUser(senderID,pageId);                        
+                                                    //if new session check mongo if User Exist
+                                                    // if(isnewSession){
+                                                    //     let userProccessed = yield self.MongoDB.helpers.proccessUser(senderID,pageId);
+                                                    // }
+                        let userToBeProccessed = yield self.MongoDB.helpers.proccessUser(senderID,pageId); //Temporarily for testing as if we are a new user                        
                         const isPostbackMessage = message.postback ? true : false;
+                        //Checks if message is a Quick Reply
                         let isQuickReply = false
                         if (message.message){
                             if(message.message.quick_reply){
                             isQuickReply = true
                                 }}
+                        //Check if message is a Text-Only msg
                         let isTextMessage = false;
                         if ('message' in message && 'text' in message.message && !(isQuickReply)) {
                             isTextMessage = true;
                         }
-                        yield sessionStore.set(senderID);
-                        if (isTextMessage) {
+                        yield sessionStore.set(senderID); //Set Facebook ID in Redis session
+
+                        // Processing of the data
+                        if (isTextMessage) { //Process Text-Only-Message
                             if (userToBeProccessed) {
                                 self.welcomeMessage(message.message.text, senderID);
                             } else {
                                 self.textMessage(message, senderID);
                             }
-                        } else if (isPostbackMessage) {
+
+                        } else if (isPostbackMessage) { //Process PostbackMessage
                             if (userToBeProccessed) {
                                 self.welcomeMessage(message.postback.payload, senderID);
                             } else {
                                 self.postbackMessage(message, senderID);
                             }
-                        } else if (isQuickReply) {
+
+                        } else if (isQuickReply) { //Quick Reply
                                 self.QuickReplyCommand(message.message, senderID);
                             }
                             else if (message.message.attachments){
                                 self.imageProccess(message.message.attachments,senderID);
                             }
-                        else {
+
+                        else {  //If everything fails Fallback
                             self.fallback(message, senderID);
                         }
                      

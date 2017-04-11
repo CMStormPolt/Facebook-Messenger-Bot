@@ -74,13 +74,14 @@ let get = co(function* (senderId, autoCreate) {
 });
 
 let checkExists = co(function* (senderId) {
-    let item = yield get(senderId);
-    if (item) {
+    let SessionData = yield get(senderId);
+    if (SessionData) {
         return true;
     } else {
         return false;
     }
 });
+exports.checkExists = checkExists;
 
 let printSessions = co(function* () {
     let data = yield client.hgetallAsync("sessions");
@@ -112,4 +113,4 @@ exports.set = set;
 exports.get = get;
 exports.printSessions = printSessions;
 exports.clearOldSessions = clearOldSessions;
-exports.checkExists = checkExists;
+
