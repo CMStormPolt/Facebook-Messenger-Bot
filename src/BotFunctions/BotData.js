@@ -414,11 +414,11 @@ class ProccessActioner{
    } 
    // if message is with quick replies - customize the quick replies
     if(message.replies){
-       let message_replies_concat = message.replies.join('@@@@');
+       let message_replies_concat = message.replies.join('@@@@'); //joining the strings to process the string without a loop
        for(let variable_name in data){
          message_replies_concat = message_replies_concat.replace(variable_name.toString(),data[variable_name])
         }
-        message.replies = message_replies_concat.split('@@@@');
+        message.replies = message_replies_concat.split('@@@@'); //Splitting the string back to an array
        }
      if(data.attachment){
         console.log('data attachment customize ============================================================')

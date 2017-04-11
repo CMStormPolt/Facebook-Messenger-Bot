@@ -238,7 +238,7 @@ class BotStack {
         }
     }
 
-    postbackMessage(postback, senderID) {
+    postbackMessage(postback, senderID) { //Used processing Postback Buttons from Facebook Messenger
         co(function* () {
             let text = postback.postback.payload;
             log.debug("Process postback", {
@@ -274,18 +274,18 @@ class BotStack {
         })();
     };
 
-    QuickReplyCommand(postback, senderID) {
+    QuickReplyCommand(postback, senderID) { //Used processing QuickReply Buttons from Facebook Messenger
         co(function* () {
             let text = postback.quick_reply.payload;
-            log.debug("Process postback", {
-                module: "botstack:postbackMessage",
+            log.debug("Process QuickReply", {
+                module: "botstack:QuickReply",
                 senderId: senderID,
                 postback: postback,
                 text: text
             });
             botmetrics.logUserRequest(text, senderID);
             log.debug("Sending to API.AI", {
-                module: "botstack:postbackMessage",
+                module: "botstack:QuickReply",
                 senderId: senderID,
                 text: text
             });
@@ -299,24 +299,24 @@ class BotStack {
                 botmetrics.logServerResponse(apiaiResp, senderID);
             } catch (err) {
                 log.error(err, {
-                    module: "botstack:postbackMessage",
+                    module: "botstack:QuickReply",
                     senderId: senderID,
-                    reason: "Error in API.AI response"
+                    reason: "Error in API.AI QuickReply response"
                 });
-                fb.reply(fb.textMessage("I'm sorry, I didn't understand that"), senderID);
+                fb.reply(fb.textMessage("I'm sorry, I didn't understand that QuickReply"), senderID);
                 botmetrics.logServerResponse(err, senderID);
             }
         })();
     };
 
-    welcomeMessage(messageText, senderID) {
+    welcomeMessage(messageText, senderID) { //Initiates the NewUser Routine from API.ai
         botmetrics.logUserRequest(messageText, senderID);
-        log.debug("Process welcome message", {
+        log.debug("Initiates the NewUser Routine from API.ai", {
             module: "botstack:welcomeMessage",
             senderId: senderID
         });
         co(function* (){
-            let text = 'Hi, I am a new User'
+            let text = 'Hi, I am a new User' //API.ai Routine init text
             try {
                 let apiaiResp = yield apiai.processTextMessage(text, senderID);
                 log.debug("Facebook welcome result", {
@@ -337,7 +337,7 @@ class BotStack {
         })();
     };
 
-    imageProccess(image, senderID) {
+    imageProccess(image, senderID) { //Processing an images sent from the SenderID
         // console.log(image);
         log.debug("Process Image message", {
             module: "botstack:imageMessage",
