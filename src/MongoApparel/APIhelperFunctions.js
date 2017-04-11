@@ -418,3 +418,11 @@ function findProductsbyDateRange(startDate, endDate){
     })
 }
 module.exports.findProductsbyDateRange = findProductsbyDateRange;
+
+function findProductByDate(date){
+    return new Promise(function(resolve,reject){
+        schemas.Product.find({date_added: date})
+                       .then(resolve);
+    })
+}
+module.exports.findProductByDate = findProductByDate

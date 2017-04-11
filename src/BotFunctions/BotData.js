@@ -286,36 +286,35 @@ class ProccessActioner{
       if(this[action]){
         return Promise.resolve(this[action](senderId,result))
     } else {
-      return Promise.resolve(false);
+      return Promise.resolve(true);
     }
   } //save names to db user
    setNames(senderId,result){
-     return MongoDB.helpers.findByFbIdAndUpdate(senderId.toString(),{'FBinfo.f_name': result.parameters.f_name,'FBinfo.l_name': result.parameters.l_name})
+      return new Promise(function(resolve,reject){
+         MongoDB.helpers.findByFbIdAndUpdate(senderId.toString(),{'FBinfo.f_name': result.parameters.f_name,'FBinfo.l_name': result.parameters.l_name})
+         .then(function(result){
+           resolve(true);
+         })
+      })
+      
    } //save city to db user
    setCity(senderId,result){
-     return MongoDB.helpers.findByFbIdAndUpdate(senderId.toString(),{'FBinfo.living_in': result.parameters.city.city,'FBinfo.country': result.parameters.city.country});
+     return new Promise(function(resolve,reject){
+      MongoDB.helpers.findByFbIdAndUpdate(senderId.toString(),{'FBinfo.living_in': result.parameters.city.city,'FBinfo.country': result.parameters.city.country})
+                     .then(function(result){
+                       resolve(true);
+                     })
+     })
+     return 
    } //save nickname to db user
    setNickname(senderId,result){
      let nickname = result.parameters.nickname;
-     if(nickname == 'first name'){
-       return new Promise(function(resolve,reject){
-        MongoDB.helpers.findUserByFbId(senderId).then(function(user){
-            user.nick = user.FBinfo.f_name;
-            user.save()
-                .then(resolve);
-         })
-       })
-     } else if(nickname == 'last name'){
-       return new Promise(function(resolve,reject){
-        MongoDB.helpers.findUserByFbId(senderId).then(function(user){
-            user.nick = user.FBinfo.l_name;
-            user.save()
-                .then(resolve);
-         })
-       })
-     } else {
-         return MongoDB.helpers.findByFbIdAndUpdate(senderId.toString(),{'nick': nickname,})
-      }
+     return new Promise(function(resolve,reject){
+         MongoDB.helpers.findByFbIdAndUpdate(senderId.toString(),{'nick': nickname,})
+                         .then(function(result){
+                            resolve(true)
+               })
+          })
    }
 
    // gets the product by its code and resolves its price
