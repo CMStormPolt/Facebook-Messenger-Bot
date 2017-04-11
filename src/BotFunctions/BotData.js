@@ -401,6 +401,40 @@ class ProccessActioner{
       })
     }
 
+    //gets random photo of connected product and sends it to api ai
+    getRandomNewArrivalsProductPic(senderId,result){
+      //Setup dates for the Mongoose query for new arrivals
+        var now = new Date()
+
+          if (new Date().getMonth()<2){
+              var lastYear =  (new Date().getYear()-1)
+          }
+          else {var lastYear =  new Date().getYear()};
+
+        var lastMonth = (new Date().getMonth()-1)%12
+        var lastMonthDate = new Date().getDate() //Same day of tyhe month as today
+
+        var NewArrivalsDate = new Date()
+              NewArrivalsDate.setYear(lastYear)
+              NewArrivalsDate.setMonth(lastMonth)
+              NewArrivalsDate.setDate(lastMonthDate)
+              //END of Setup dates for the Mongoose query for new arrivals
+
+      return new Promise(function(resolve,reject){
+        let func = co(function* (){
+          let code = result.parameters.product_code
+          let currentProduct = yield MongoDB.helpers.getProductFromDb(code);
+          let connectedProduct = yield MongoDB.helpers.getRandomConnectedProduct(currentProduct);
+          let randomPhoto = MongoDB.helpers.getRandomImageOfProduct(connectedProduct);
+          // console.log(randomPhoto);
+           resolve({
+             attachment: randomPhoto
+           });
+        })
+        func();
+      })
+    }
+
 
 // customize a message if custom data from bot action is presented and returs it to api ai proccessor
    messageCustomization(message,data){
@@ -423,7 +457,7 @@ class ProccessActioner{
      if(data.attachment){
         console.log('data attachment customize ============================================================')
         message = fb.imageAttachment(data.attachment)
-        message.messageType =
+        //message.messageType =
       }
       //  console.log(message);
         return message

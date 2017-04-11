@@ -224,7 +224,7 @@ class BotStack {
                         } else if (isQuickReply) { //Quick Reply
                                 self.QuickReplyCommand(message.message, senderID);
                             }
-                            else if (message.message.attachments){
+                            else if (message.message.attachments){ //TOVA IZGLEJDA BUGAVO!! - Danny
                                 self.imageProccess(message.message.attachments,senderID);
                             }
 

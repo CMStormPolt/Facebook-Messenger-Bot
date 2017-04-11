@@ -408,3 +408,14 @@ function getProductByFbPic(fb_pic){
          })
 }
 module.exports.getProductByFbPic = getProductByFbPic;
+
+//Return all products added within specified dates
+function findProductsbyDateRange(startDate, endDate){
+    return new Promise(function(resolve,reject){    
+      schemas.Product.find({date_added: {$gte: startDate, $lte: endDate}})
+                              .then(function(data){
+                                  resolve(data);
+            });
+    })
+}
+module.exports.findProductsbyDateRange = findProductsbyDateRange;
