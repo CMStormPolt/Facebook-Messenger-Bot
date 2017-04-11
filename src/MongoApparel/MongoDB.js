@@ -17,7 +17,7 @@ let schemas = require('./SchemaModels')
 var requests = 0  //total requests counter made for the session
 var request_last = Date //Plans: if connection idle for 5 min=>close, on.request, open connection
 // const MongoURI = 'mongodb://<dbuser>:<dbpassword>@ds127260.mlab.com:27260/fb-bot'
-const MongoURI = 'mongodb://localhost:27017' //dev db
+const MongoURI = process.env.MongoURI //dev db
 const MongoOptions = {
   db: { native_parser: true },
   server: { poolSize: 5 },

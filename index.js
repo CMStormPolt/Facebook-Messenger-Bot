@@ -7,26 +7,9 @@ const ParaBot = new BotStack('ParaBot')
 ParaBot.startServer()
 
 
-// module.exports = require('./src/botstack.js');
-// module.exports = require('./src/BotFunctions/ParadiseBot.js');
-// module.exports = require('./src/MongoApparel/MongoDB.js');
+
+let GetRandomNewProduct = require('./src/BotFunctions/BotData').ProccessActioner
+let Test = new GetRandomNewProduct()
+let gg = Test.getRandomNewArrivalsProductPic()
 
 
-
-/* MongoDB tests
-
-MongoDB.Add({'fName':'Danail',
-             'lName':'Irinkov',
-             'Nick':'Dan',
-             'Address':'ul. Aleko Konstantinov 10'
-        })
-*/
-
-/*
-const botstart = require('./src/botstack')
-console.log(botstart)
-new botstart.BotStack()  
-
-const bbb = new BotStack.startServer()
-bbb()
-*/

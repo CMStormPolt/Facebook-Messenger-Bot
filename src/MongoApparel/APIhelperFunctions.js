@@ -375,7 +375,6 @@ module.exports.getProductFromDb = getProductFromDb;
 function getRandomImageOfProduct(product){
     let randomRange = product.images.length,
         randomNumber = Math.floor(Math.random() * randomRange);
-        console.log(randomNumber)
         return product.images[randomNumber].url;
 }
 module.exports.getRandomImageOfProduct = getRandomImageOfProduct;
@@ -412,10 +411,10 @@ module.exports.getProductByFbPic = getProductByFbPic;
 //Return all products added within specified dates
 function findProductsbyDateRange(startDate, endDate){
     return new Promise(function(resolve,reject){    
-      schemas.Product.find({date_added: {$gte: startDate, $lte: endDate}})
-                              .then(function(data){
+      schemas.Product.find({code: { $not: /^MS*/ },date_added: {$gte: startDate, $lte: endDate}}).where('code')
+                              .then((data)=>{
                                   resolve(data);
-            });
+                                 });
     })
 }
 module.exports.findProductsbyDateRange = findProductsbyDateRange;

@@ -318,6 +318,7 @@ class ProccessActioner{
       }
    }
 
+
    // gets the product by its code and resolves its price
    getPriceProduct(senderId,result){
      //gets code from context about product
@@ -338,6 +339,8 @@ class ProccessActioner{
      func();
      })
    }
+
+
    // finds product and returs its size
    getSizeProduct(senderId,result){
      //gets code from context about product
@@ -363,13 +366,15 @@ class ProccessActioner{
      func();
      })
    }   
+
+
    // gets names and honorifics for current user 
     greetings(senderId,result){
       return new Promise(function(resolve,reject){
         let func = co(function* (){
           let user = yield MongoDB.helpers.findUserByFbId(senderId);
           let $mrms = 't/a';
-          if(user.FBinfo.gender == 'male'){
+          if(user.FBinfo.gender == 'male'){ //PROBLEM - If we dont know the gender? Always Ms? - Danny
             $mrms  = 'Mr'
           } else {
             $mrms = 'Ms'
@@ -383,6 +388,7 @@ class ProccessActioner{
         func();
       })
     }
+
 
     //gets random photo of connected product and sends it to api ai
     getRandomConnectedProductPic(senderId,result){
@@ -399,17 +405,18 @@ class ProccessActioner{
         })
         func();
       })
-    }
+    };
+
 
     //gets random photo of connected product and sends it to api ai
-    getRandomNewArrivalsProductPic(senderId,result){
+getRandomNewArrivalsProductPic(senderId, category){
       //Setup dates for the Mongoose query for new arrivals
         var now = new Date()
 
           if (new Date().getMonth()<2){
-              var lastYear =  (new Date().getYear()-1)
+              var lastYear =  (new Date().getFullYear()-1)
           }
-          else {var lastYear =  new Date().getYear()};
+          else {var lastYear =  new Date().getFullYear()};
 
         var lastMonth = (new Date().getMonth()-1)%12
         var lastMonthDate = new Date().getDate() //Same day of tyhe month as today
@@ -422,14 +429,14 @@ class ProccessActioner{
 
       return new Promise(function(resolve,reject){
         let func = co(function* (){
-          let code = result.parameters.product_code
+          let NewArrivals = yield MongoDB.helpers.findProductsbyDateRange(NewArrivalsDate, now)
+          let randomNumber = Math.floor(Math.random() * NewArrivals.length);
+          let code = NewArrivals[randomNumber].code
+          console.log(code)
           let currentProduct = yield MongoDB.helpers.getProductFromDb(code);
-          let connectedProduct = yield MongoDB.helpers.getRandomConnectedProduct(currentProduct);
-          let randomPhoto = MongoDB.helpers.getRandomImageOfProduct(connectedProduct);
-          // console.log(randomPhoto);
-           resolve({
-             attachment: randomPhoto
-           });
+          let randomPhoto = MongoDB.helpers.getRandomImageOfProduct(currentProduct);
+          console.log(randomPhoto);
+          resolve({attachment: randomPhoto});
         })
         func();
       })
@@ -462,7 +469,7 @@ class ProccessActioner{
       //  console.log(message);
         return message
    }
-  }
+}
 module.exports.ProccessActioner = ProccessActioner;
 
 
