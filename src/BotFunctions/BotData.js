@@ -549,25 +549,8 @@ messageCustomization(message, customObj, senderId){ //replaces Commands from API
         }
         message.replies = message_replies_concat.split('@@@@'); //Splitting the string back to an array
        }
+       //sends the message to the BotCommands proccesser for modification if needed and returs it
       message = yield BotCommandsClassInstance.processCommand(message.speech,message,customObj);
-
-    //  if(message.speech == 'BOT_Show_Pic'){
-    //     message = {};
-    //     message.attachment = fb.imageAttachment(customObj.attachment)
-    //     message.attachment.type = 'image';
-    //     message.type = 5;
-    //     console.log(message)
-    //  }
-     
-    //  if(message.speech == 'BOT_Show_Random_Product'){
-    //     message = {};
-    //     message.quick_replies = fb.quickReplyMaker(['product detail','next','add to wish list'])
-    //     message.attachment = fb.imageAttachment(customObj.attachment)
-    //     message.attachment.type = 'image';
-    //     message.type = 5;
-    //     console.log(message)
-    //  }
-
       resolve(message);
         })
         func();
