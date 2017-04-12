@@ -384,12 +384,24 @@ function getRandomProductFromDb(){
 }
 module.exports.getRandomProductFromDb = getRandomProductFromDb
 // gets last seen product form the user in db
-function getLastSeenProductFromDb(user){
-    let len = user.FBinfo.products_seen.length;
-    let lastSeenProduct = user.FBinfo.products_seen[len - 1];
+function getLastSeenProductFromDb(userObj){
+    let len = userObj.FBinfo.products_seen.length;
+    let lastSeenProduct = userObj.FBinfo.products_seen[len - 1];
         return lastSeenProduct;
 }
 module.exports.getLastSeenProductFromDb = getLastSeenProductFromDb;
+
+function getLastSeenProductCode(senderId){
+      return new Promise(function(resolve,reject){
+        findUserByFbId(senderId)
+                       .then(function(userObj){
+                         let product = getLastSeenProductFromDb(userObj)
+                        resolve(product);
+                       })
+        })
+    }
+module.exports.getLastSeenProductCode = getLastSeenProductCode;
+
 //gets sizes of a product
 function getLastSeenProductSize(product){
     let product_size = '';

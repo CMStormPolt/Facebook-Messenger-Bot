@@ -370,7 +370,7 @@ class ProccessActioner{
       return new Promise(function(resolve,reject){
         let func = co(function* (){
           let randomProduct = yield MongoDB.helpers.getRandomProductFromDb();
-          let userUpdated = yield MongoDB.helpers.findByFbIdAndUpdate(senderId,{$push:{'FBinfo.products_seen':randomProduct}});
+          let updateProductSeen = yield MongoDB.helpers.findByFbIdAndUpdate(senderId,{$push:{'FBinfo.products_seen':randomProduct}});
           let randomPhoto = MongoDB.helpers.getRandomImageOfProduct(randomProduct);
           console.log('get random photo =============================================================')
           console.log(randomPhoto);
@@ -381,6 +381,7 @@ class ProccessActioner{
         func();
       })
    }
+
    // gets names and honorifics for current user 
     greetings(senderId,result){
       return new Promise(function(resolve,reject){
@@ -401,7 +402,6 @@ class ProccessActioner{
         func();
       })
     }
-
 
 
     //gets random photo of connected product and sends it to api ai
@@ -437,8 +437,8 @@ class ProccessActioner{
     getLastSeenPrice(senderId,result){
       return new Promise(function(resolve,reject){
         MongoDB.helpers.findUserByFbId(senderId)
-                       .then(function(user){
-                         let product = MongoDB.helpers.getLastSeenProductFromDb(user)
+                       .then(function(userObj){
+                         let product = MongoDB.helpers.getLastSeenProductFromDb(userObj)
                          let product_price = MongoDB.helpers.getLastSeenProductPrice(product);
                         resolve(
                           {
@@ -498,10 +498,9 @@ getRandomNewArrivalsProductPic(senderId, category){
           let NewArrivals = yield MongoDB.helpers.findProductsbyDateRange(NewArrivalsDate, now)
           let randomNumber = Math.floor(Math.random() * NewArrivals.length);
           let code = NewArrivals[randomNumber].code
-          console.log(code)
+          let updateProductSeen = yield MongoDB.helpers.findByFbIdAndUpdate(senderId,{$push:{'FBinfo.products_seen':code}});
           let currentProduct = yield MongoDB.helpers.getProductFromDb(code);
           let randomPhoto = MongoDB.helpers.getRandomImageOfProduct(currentProduct);
-          console.log(randomPhoto);
           resolve({attachment: randomPhoto});
         })
         func();
@@ -509,36 +508,41 @@ getRandomNewArrivalsProductPic(senderId, category){
     }
 
 
-// customize a message if custom data from bot action is presented and returs it to api ai proccessor
-   messageCustomization(message,data){
-     console.log('aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',message,'bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb', data)
+// customize a message if custom customObj from bot action is presented and returs it to api ai proccessor
+messageCustomization(message, customObj, senderId){ //replaces Commands from API.ai Intents with our content
+  return new Promise(function(resolve,reject){
+  let func = co(function* (){
+    let code = yield MongoDB.helpers.getLastSeenProductCode(senderId)
+     //console.log('aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',message,'bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb', customObj)
      // if text repsonse - this customize text response
-     if(message.speech){
-    for(let variable_name in data){
+    if(message.speech){
+    for(let variable_name in customObj){
     if (message.speech.indexOf(variable_name.toString()) > 0) {
-      message.speech = message.speech.replace(variable_name.toString(),data[variable_name]);
-    }
-  }
+      message.speech = message.speech.replace(variable_name.toString(),customObj[variable_name]);
+      message.speech = message.speech.replace('$code',code);
+    }}
    } 
    // if message is with quick replies - customize the quick replies
     if(message.replies){
        let message_replies_concat = message.replies.join('@@@@'); //joining the strings to process the string without a loop
-       for(let variable_name in data){
-         message_replies_concat = message_replies_concat.replace(variable_name.toString(),data[variable_name])
+       for(let variable_name in customObj){
+         message_replies_concat = message_replies_concat.replace(variable_name.toString(),customObj[variable_name])
         }
         message.replies = message_replies_concat.split('@@@@'); //Splitting the string back to an array
        }
-     if(message.speech == 'this message will be redacted'){
+     if(message.speech == '$Show_Pic'){
         message = {};
-        message.attachment = fb.imageAttachment(data.attachment)
+        message.attachment = fb.imageAttachment(customObj.attachment)
         message.attachment.type = 'image';
         message.quick_replies = fb.quickReplyMaker(['product detail','next','add to wish list'])
         message.type = 5;
+        console.log(message)
      }
-        return message
-
-   }
-}
+      resolve(message);
+        })
+        func();
+      }
+  )}}
 module.exports.ProccessActioner = ProccessActioner;
 
 
