@@ -53,4 +53,4 @@ helpers.CreateHelperDbs(mongoose) //checks if id tables have been initiated and 
 // helpers.getProductFromDb('sd143').then(function(product){
 //   let randompic = helpers.getRandomImageOfProduct(product)
 //   console.log(randompic);
-// })
+// }

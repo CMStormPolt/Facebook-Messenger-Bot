@@ -286,36 +286,35 @@ class ProccessActioner{
       if(this[action]){
         return Promise.resolve(this[action](senderId,result))
     } else {
-      return Promise.resolve(false);
+      return Promise.resolve(true);
     }
   } //save names to db user
    setNames(senderId,result){
-     return MongoDB.helpers.findByFbIdAndUpdate(senderId.toString(),{'FBinfo.f_name': result.parameters.f_name,'FBinfo.l_name': result.parameters.l_name})
+      return new Promise(function(resolve,reject){
+         MongoDB.helpers.findByFbIdAndUpdate(senderId.toString(),{'FBinfo.f_name': result.parameters.f_name,'FBinfo.l_name': result.parameters.l_name})
+         .then(function(result){
+           resolve(true);
+         })
+      })
+      
    } //save city to db user
    setCity(senderId,result){
-     return MongoDB.helpers.findByFbIdAndUpdate(senderId.toString(),{'FBinfo.living_in': result.parameters.city.city,'FBinfo.country': result.parameters.city.country});
+     return new Promise(function(resolve,reject){
+      MongoDB.helpers.findByFbIdAndUpdate(senderId.toString(),{'FBinfo.living_in': result.parameters.city.city,'FBinfo.country': result.parameters.city.country})
+                     .then(function(result){
+                       resolve(true);
+                     })
+     })
+     return 
    } //save nickname to db user
    setNickname(senderId,result){
      let nickname = result.parameters.nickname;
-     if(nickname == 'first name'){
-       return new Promise(function(resolve,reject){
-        MongoDB.helpers.findUserByFbId(senderId).then(function(user){
-            user.nick = user.FBinfo.f_name;
-            user.save()
-                .then(resolve);
-         })
-       })
-     } else if(nickname == 'last name'){
-       return new Promise(function(resolve,reject){
-        MongoDB.helpers.findUserByFbId(senderId).then(function(user){
-            user.nick = user.FBinfo.l_name;
-            user.save()
-                .then(resolve);
-         })
-       })
-     } else {
-         return MongoDB.helpers.findByFbIdAndUpdate(senderId.toString(),{'nick': nickname,})
-      }
+     return new Promise(function(resolve,reject){
+         MongoDB.helpers.findByFbIdAndUpdate(senderId.toString(),{'nick': nickname,})
+                         .then(function(result){
+                            resolve(true)
+               })
+          })
    }
 
 
@@ -398,7 +397,6 @@ class ProccessActioner{
           let currentProduct = yield MongoDB.helpers.getProductFromDb(code);
           let connectedProduct = yield MongoDB.helpers.getRandomConnectedProduct(currentProduct);
           let randomPhoto = MongoDB.helpers.getRandomImageOfProduct(connectedProduct);
-          // console.log(randomPhoto);
            resolve({
              attachment: randomPhoto
            });
@@ -461,13 +459,16 @@ getRandomNewArrivalsProductPic(senderId, category){
         }
         message.replies = message_replies_concat.split('@@@@'); //Splitting the string back to an array
        }
-     if(data.attachment){
-        console.log('data attachment customize ============================================================')
-        message = fb.imageAttachment(data.attachment)
-        //message.messageType =
-      }
-      //  console.log(message);
+
+     if(message.speech == 'this message will be redacted'){
+        message = {};
+        message.attachment = fb.imageAttachment(data.attachment)
+        message.attachment.type = 'image';
+        message.quick_replies = fb.quickReplyMaker(['product detail','next','add to wish list'])
+        message.type = 5;
+     }
         return message
+
    }
 }
 module.exports.ProccessActioner = ProccessActioner;

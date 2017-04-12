@@ -415,6 +415,7 @@ function findProductsbyDateRange(startDate, endDate){
                               .then((data)=>{
                                   resolve(data);
                                  });
-    })
-}
+        });
+    }
 module.exports.findProductsbyDateRange = findProductsbyDateRange;
+

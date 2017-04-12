@@ -9,6 +9,7 @@ const Q = require('q');
 const BotData = require('./BotFunctions/BotData')
 
 let processMessagesFromApiAi = co(function* (apiaiResponse, senderID) {
+    console.log(apiaiResponse);
     if (!'messages' in apiaiResponse) {
         log.debug("Response from API.AI not contains messages", {
             module: "botstack:fb",
@@ -39,6 +40,10 @@ let processMessagesFromApiAi = co(function* (apiaiResponse, senderID) {
             case 4: // custom payload
                 replyMessage = customMessageReply(message);
                 break;
+            case 5: // custom message for image + quick replies in single message
+                replyMessage = message;
+                delete replyMessage['type']; 
+                break;    
             default:
                 log.error("Unknown message type", { module: "botstack:fb "});
                 break;
@@ -143,7 +148,7 @@ function imageReply(message) {
         attachment: {
             type: "image",
             payload: {
-                url: message.imageUrl || message.url
+                url: message.payload.url
             }
         }
     }
@@ -349,16 +354,27 @@ function youtubeVideoCard(thumbUrl, downloadUrl, originalUrl) {
 }
 
 function imageAttachment(thumbUrl) {
-    return {
-        "attachment": {
-            "type": "image",
+    return {  
+            "type": 3,
             "payload": {
                 "url": thumbUrl
             }
-        }
     }
 }
 
+function quickReplyMaker(array){
+    let quick_replies = []
+    for(let reply of array){
+        let quick_reply = {
+        "content_type":"text",
+        "title": reply,
+        "payload":reply
+    }
+    quick_replies.push(quick_reply);
+}
+return quick_replies;
+}
+module.exports.quickReplyMaker = quickReplyMaker;
 function genericMessage() {
     return {
         "attachment": {

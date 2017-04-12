@@ -224,10 +224,11 @@ class BotStack {
                         } else if (isQuickReply) { //Quick Reply
                                 self.QuickReplyCommand(message.message, senderID);
                             }
-                            else if (message.message.attachments){ //TOVA IZGLEJDA BUGAVO!! - Danny
-                                self.imageProccess(message.message.attachments,senderID);
+                            else if (message.message.attachments){ //TOVA IZGLEJDA BUGAVO!! - Danny // should be fixed now
+                                if(message.message.attachments.type == 'image'){
+                                     self.imageProccess(message.message.attachments,senderID);
+                                }
                             }
-
                         else {  //If everything fails Fallback
                             self.fallback(message, senderID);
                         }
@@ -337,8 +338,11 @@ class BotStack {
         })();
     };
 
+
+
     imageProccess(image, senderID) { //Processing an images sent from the SenderID
         // console.log(image);
+
         log.debug("Process Image message", {
             module: "botstack:imageMessage",
             senderId: senderID
@@ -368,8 +372,6 @@ class BotStack {
         }
         })();
     };
-
-
 
     fallback(message, senderID) {
         log.debug("Unknown message", {
