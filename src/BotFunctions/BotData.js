@@ -447,6 +447,21 @@ class ProccessActioner{
                        })
         })
     }
+    getProductDetails(senderId,result){
+      return new Promise(function(resolve,reject){
+        MongoDB.helpers.findUserByFbId(senderId)
+                       .then(function(user){
+                         let product = MongoDB.helpers.getLastSeenProductFromDb(user)
+                         let product_size = MongoDB.helpers.getLastSeenProductSize(product);
+                         let product_price = MongoDB.helpers.getLastSeenProductPrice(product);
+                        resolve(
+                          {
+                            $product_size: product_size,
+                            $product_price: product_price
+                          });
+                       })
+      })
+    }
 
    // gets names and honorifics for current user 
     greetings(senderId,result){
@@ -500,6 +515,7 @@ getRandomNewArrivalsProductPic(senderId, category){
           let code = NewArrivals[randomNumber].code
           let updateProductSeen = yield MongoDB.helpers.findByFbIdAndUpdate(senderId,{$push:{'FBinfo.products_seen':code}});
           let currentProduct = yield MongoDB.helpers.getProductFromDb(code);
+          let userUpdated = yield MongoDB.helpers.findByFbIdAndUpdate(senderId,{$push:{'FBinfo.products_seen':currentProduct}});
           let randomPhoto = MongoDB.helpers.getRandomImageOfProduct(currentProduct);
           resolve({attachment: randomPhoto});
         })
