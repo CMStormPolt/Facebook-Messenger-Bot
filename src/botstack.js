@@ -225,7 +225,7 @@ class BotStack {
                                 self.QuickReplyCommand(message.message, senderID);
                             }
                             else if (message.message){
-                            if (message.message.attachments){ //TOVA IZGLEJDA BUGAVO!! - Danny // should be fixed now
+                            if (message.message.attachments){
                                 if(message.message.attachments.type == 'image'){
                                      self.imageProccess(message.message.attachments,senderID);
                                 }

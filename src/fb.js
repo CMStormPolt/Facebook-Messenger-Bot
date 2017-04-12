@@ -144,11 +144,12 @@ exports.ImageQR = ImageQR;
 
 
 function imageReply(message) {
+    console.log('zzzzzzzzzzzzzzzzzzzzzzzzzzzzz', message)
     return {
         attachment: {
             type: "image",
             payload: {
-                url: message.payload.url
+                url: message.imageUrl
             }
         }
     }

@@ -409,7 +409,7 @@ class ProccessActioner{
     //gets random photo of connected product and sends it to api ai
 getRandomNewArrivalsProductPic(senderId, category){
       //Setup dates for the Mongoose query for new arrivals
-      let monthCount = 1
+      let monthCount = 1 //how many months behind to show products
         var now = new Date()
 
           if (new Date().getMonth()<=monthCount){
@@ -426,7 +426,7 @@ getRandomNewArrivalsProductPic(senderId, category){
               NewArrivalsDate.setMonth(lastMonth)
               NewArrivalsDate.setDate(lastMonthDate)
               //END of Setup dates for the Mongoose query for new arrivals
-              
+
       return new Promise(function(resolve,reject){
         let func = co(function* (){
           let NewArrivals = yield MongoDB.helpers.findProductsbyDateRange(NewArrivalsDate, now)
@@ -445,6 +445,7 @@ getRandomNewArrivalsProductPic(senderId, category){
 
 // customize a message if custom data from bot action is presented and returs it to api ai proccessor
    messageCustomization(message,data){
+     console.log('aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',message,'bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb', data)
      // if text repsonse - this customize text response
      if(message.speech){
     for(let variable_name in data){
@@ -462,7 +463,7 @@ getRandomNewArrivalsProductPic(senderId, category){
         message.replies = message_replies_concat.split('@@@@'); //Splitting the string back to an array
        }
 
-     if(message.speech == 'this message will be redacted'){
+     if(message.speech == 'Show_Pic'){
         message = {};
         message.attachment = fb.imageAttachment(data.attachment)
         message.attachment.type = 'image';
