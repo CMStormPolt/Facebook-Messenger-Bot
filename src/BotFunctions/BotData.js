@@ -372,10 +372,9 @@ class ProccessActioner{
           let randomProduct = yield MongoDB.helpers.getRandomProductFromDb();
           let updateProductSeen = yield MongoDB.helpers.findByFbIdAndUpdate(senderId,{$push:{'FBinfo.products_seen':randomProduct}});
           let randomPhoto = MongoDB.helpers.getRandomImageOfProduct(randomProduct);
-          console.log('get random photo =============================================================')
-          console.log(randomPhoto);
             resolve({
-              attachment: randomPhoto
+              attachment: randomPhoto,
+              $code: randomProduct.code
             })
         })
         func();
@@ -414,7 +413,8 @@ class ProccessActioner{
           let userUpdated = yield MongoDB.helpers.findByFbIdAndUpdate(senderId,{$push:{'FBinfo.products_seen':connectedProduct}});
           let randomPhoto = MongoDB.helpers.getRandomImageOfProduct(connectedProduct);
            resolve({
-             attachment: randomPhoto
+             attachment: randomPhoto,
+             $code: code
            });
         })
         func();
@@ -513,11 +513,15 @@ getRandomNewArrivalsProductPic(senderId, category){
           let NewArrivals = yield MongoDB.helpers.findProductsbyDateRange(NewArrivalsDate, now)
           let randomNumber = Math.floor(Math.random() * NewArrivals.length);
           let code = NewArrivals[randomNumber].code
-          let updateProductSeen = yield MongoDB.helpers.findByFbIdAndUpdate(senderId,{$push:{'FBinfo.products_seen':code}});
           let currentProduct = yield MongoDB.helpers.getProductFromDb(code);
-          let userUpdated = yield MongoDB.helpers.findByFbIdAndUpdate(senderId,{$push:{'FBinfo.products_seen':currentProduct}});
+          let price = MongoDB.helpers.getLastSeenProductPrice(currentProduct)
+          let lastSeenProduct = yield MongoDB.helpers.findByFbIdAndUpdate(senderId,{$push:{'FBinfo.products_seen':currentProduct}});
           let randomPhoto = MongoDB.helpers.getRandomImageOfProduct(currentProduct);
-          resolve({attachment: randomPhoto});
+          resolve({
+            attachment: randomPhoto,
+            $code: code,
+            $price: price
+           });
         })
         func();
       })
@@ -528,14 +532,12 @@ getRandomNewArrivalsProductPic(senderId, category){
 messageCustomization(message, customObj, senderId){ //replaces Commands from API.ai Intents with our content
   return new Promise(function(resolve,reject){
   let func = co(function* (){
-    let code = yield MongoDB.helpers.getLastSeenProductCode(senderId)
-     //console.log('aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',message,'bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb', customObj)
      // if text repsonse - this customize text response
     if(message.speech){
+
     for(let variable_name in customObj){
     if (message.speech.indexOf(variable_name.toString()) > 0) {
       message.speech = message.speech.replace(variable_name.toString(),customObj[variable_name]);
-      //message.speech = message.speech.replace('$code',code);
     }}
    } 
    // if message is with quick replies - customize the quick replies
@@ -550,10 +552,18 @@ messageCustomization(message, customObj, senderId){ //replaces Commands from API
         message = {};
         message.attachment = fb.imageAttachment(customObj.attachment)
         message.attachment.type = 'image';
-        message.quick_replies = fb.quickReplyMaker(['product detail','next','add to wish list'])
         message.type = 5;
         console.log(message)
      }
+     if(message.speech == '$Show_Random_Product'){
+        message = {};
+        message.quick_replies = fb.quickReplyMaker(['product detail','next','add to wish list'])
+        message.attachment = fb.imageAttachment(customObj.attachment)
+        message.attachment.type = 'image';
+        message.type = 5;
+        console.log(message)
+     }
+
       resolve(message);
         })
         func();
