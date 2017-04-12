@@ -563,16 +563,7 @@ messageCustomization(message, customObj, senderId){ //replaces Commands from API
         message.attachment.type = 'image';
         message.type = 5;
         console.log(message)
-<<<<<<< HEAD
-      }
-             resolve(message);
-      })
-      func();
-    })
-  }
-   
-      }
-=======
+
      }
 
       resolve(message);
@@ -580,7 +571,7 @@ messageCustomization(message, customObj, senderId){ //replaces Commands from API
         func();
       }
   )}}
->>>>>>> 1f2f35997c69411839f11334cbd7fabb2b20637c
+
 
 module.exports.ProccessActioner = ProccessActioner;
 
