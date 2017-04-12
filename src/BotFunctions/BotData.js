@@ -7,7 +7,7 @@ const time = require('date-and-time')
 const fs = require('fs')
 
 const MongoDB = require('../MongoApparel/MongoDB')
-
+const BotCommands = new require('./BotCommandsClass').BotCommands
 
 //Useful Objects for Facebook - not used yet
 function SwitchPback2Reply(PostbackPayload){
@@ -546,25 +546,23 @@ messageCustomization(message, customObj, senderId){ //replaces Commands from API
         }
         message.replies = message_replies_concat.split('@@@@'); //Splitting the string back to an array
        }
-     if(message.speech == '$Show_Pic'){
+      
+     if(message.speech == 'BOT_Show_Pic'){
         message = {};
         message.attachment = fb.imageAttachment(customObj.attachment)
         message.attachment.type = 'image';
         message.quick_replies = fb.quickReplyMaker(['product detail','next','add to wish list'])
         message.type = 5;
         console.log(message)
-     }
-<<<<<<< HEAD
-        return message
-   }
-}
-=======
-      resolve(message);
-        })
-        func();
       }
-  )}}
->>>>>>> 432df126cf18779d74757bc9e5451e223364d857
+             resolve(message);
+      })
+      func();
+    })
+  }
+   
+      }
+
 module.exports.ProccessActioner = ProccessActioner;
 
 
