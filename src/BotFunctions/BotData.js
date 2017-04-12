@@ -365,7 +365,7 @@ class ProccessActioner{
      func();
      })
    }   
-<<<<<<< HEAD
+
     getRandomProduct(senderId,result){
       return new Promise(function(resolve,reject){
         let func = co(function* (){
@@ -381,9 +381,6 @@ class ProccessActioner{
         func();
       })
    }
-=======
-
-
    // gets names and honorifics for current user 
     greetings(senderId,result){
       return new Promise(function(resolve,reject){
@@ -406,7 +403,7 @@ class ProccessActioner{
     }
 
 
->>>>>>> 72e27bef5d7911d0657828a421812274346a8552
+
     //gets random photo of connected product and sends it to api ai
     getRandomConnectedProductPic(senderId,result){
       return new Promise(function(resolve,reject){
@@ -422,7 +419,7 @@ class ProccessActioner{
         })
         func();
       })
-<<<<<<< HEAD
+
     }
     getLastSeenSizes(senderId,result){
       return new Promise(function(resolve,reject){
@@ -474,7 +471,7 @@ class ProccessActioner{
 =======
     };
 
->>>>>>> 72e27bef5d7911d0657828a421812274346a8552
+
 
     //gets random photo of connected product and sends it to api ai
 getRandomNewArrivalsProductPic(senderId, category){
