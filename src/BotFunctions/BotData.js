@@ -409,14 +409,16 @@ class ProccessActioner{
     //gets random photo of connected product and sends it to api ai
 getRandomNewArrivalsProductPic(senderId, category){
       //Setup dates for the Mongoose query for new arrivals
+      let monthCount = 1
         var now = new Date()
 
-          if (new Date().getMonth()<2){
+          if (new Date().getMonth()<=monthCount){
               var lastYear =  (new Date().getFullYear()-1)
           }
           else {var lastYear =  new Date().getFullYear()};
 
-        var lastMonth = (new Date().getMonth()-1)%12
+        var lastMonth = (new Date().getMonth()-monthCount) //Returns one the preset amount of months behind
+        if(lastMonth < 0){lastMonth = 12-monthCount} //corrects the month for January -1 to 12
         var lastMonthDate = new Date().getDate() //Same day of tyhe month as today
 
         var NewArrivalsDate = new Date()
@@ -424,7 +426,7 @@ getRandomNewArrivalsProductPic(senderId, category){
               NewArrivalsDate.setMonth(lastMonth)
               NewArrivalsDate.setDate(lastMonthDate)
               //END of Setup dates for the Mongoose query for new arrivals
-
+              
       return new Promise(function(resolve,reject){
         let func = co(function* (){
           let NewArrivals = yield MongoDB.helpers.findProductsbyDateRange(NewArrivalsDate, now)

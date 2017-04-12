@@ -411,7 +411,7 @@ module.exports.getProductByFbPic = getProductByFbPic;
 //Return all products added within specified dates
 function findProductsbyDateRange(startDate, endDate){
     return new Promise(function(resolve,reject){    
-      schemas.Product.find({code: { $not: /^MS*/ },date_added: {$gte: startDate, $lte: endDate}}).where('code')
+      schemas.Product.find({code: { $not: /MS*/ },date_added: {$gte: startDate, $lte: endDate}}).where('code')
                               .then((data)=>{
                                   resolve(data);
                                  });
