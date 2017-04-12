@@ -414,7 +414,7 @@ function findProductsbyDateRange(startDate, endDate){
       schemas.Product.find({date_added: {$gte: startDate, $lte: endDate}})
                               .then(function(data){
                                   resolve(data);
-            });
+        });
     })
 }
 module.exports.findProductsbyDateRange = findProductsbyDateRange;
