@@ -54,3 +54,5 @@ helpers.CreateHelperDbs(mongoose) //checks if id tables have been initiated and 
 //   let randompic = helpers.getRandomImageOfProduct(product)
 //   console.log(randompic);
 // }
+// helpers.findByFbIdAndUpdate('1256338254484843',{$push:{'FBinfo.products_seen':'randomProduct'}})
+//        .then(console.log);

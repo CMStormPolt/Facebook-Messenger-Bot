@@ -347,7 +347,7 @@ module.exports.proccessUser = proccessUser;
 //finds and updates user
 function findByFbIdAndUpdate(senderId,args){
     return new Promise(function(resolve,reject){
-        schemas.User.update({'FBinfo.SenderId': senderId},{$set: args})
+        schemas.User.update({'FBinfo.SenderId': senderId},args)
                     .then(resolve);
     })
 }
@@ -370,6 +370,42 @@ function getProductFromDb(productCode){
     })
 }
 module.exports.getProductFromDb = getProductFromDb;
+//gets a random product from the db
+function getRandomProductFromDb(){
+    return new Promise(function(resolve,reject){
+        schemas.Product.find({})
+            .then(function(allProducts){
+                let len = allProducts.length;
+                let randomNumber = Math.floor(Math.random() * len);
+                let randomProduct = allProducts[randomNumber];
+                    resolve(randomProduct);
+                       })
+    })
+}
+module.exports.getRandomProductFromDb = getRandomProductFromDb
+// gets last seen product form the user in db
+function getLastSeenProductFromDb(user){
+    let len = user.FBinfo.products_seen.length;
+    let lastSeenProduct = user.FBinfo.products_seen[len - 1];
+        return lastSeenProduct;
+}
+module.exports.getLastSeenProductFromDb = getLastSeenProductFromDb;
+//gets sizes of a product
+function getLastSeenProductSize(product){
+    let product_size = '';
+    for(let size of product.sizes){    
+        product_size += (size.title + ',');
+     }
+        product_size = product_size.slice(0,-1)
+        return product_size;
+}
+module.exports.getLastSeenProductSize = getLastSeenProductSize
+// gets price of a product
+function getLastSeenProductPrice(product){
+    let product_price = product.prices[0].price;
+        return product_price;
+}
+module.exports.getLastSeenProductPrice = getLastSeenProductPrice;
 
 //gets a random picture for a product
 function getRandomImageOfProduct(product){
