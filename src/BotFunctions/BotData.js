@@ -552,7 +552,6 @@ getRandomNewArrivalsProductPic(senderId, category){
         message.type = 5;
      }
         return message
-
    }
 }
 module.exports.ProccessActioner = ProccessActioner;
