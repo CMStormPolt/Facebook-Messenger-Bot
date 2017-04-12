@@ -7,8 +7,8 @@ const time = require('date-and-time')
 const fs = require('fs')
 
 const MongoDB = require('../MongoApparel/MongoDB')
-const BotCommands = new require('./BotCommandsClass').BotCommands
-
+const BotCommandsClass = require('./BotCommandsClass').BotCommandsClass;
+const BotCommandsClassInstance = new BotCommandsClass(fb);
 //Useful Objects for Facebook - not used yet
 function SwitchPback2Reply(PostbackPayload){
     switch(PostbackPayload){
@@ -372,9 +372,11 @@ class ProccessActioner{
           let randomProduct = yield MongoDB.helpers.getRandomProductFromDb();
           let updateProductSeen = yield MongoDB.helpers.findByFbIdAndUpdate(senderId,{$push:{'FBinfo.products_seen':randomProduct}});
           let randomPhoto = MongoDB.helpers.getRandomImageOfProduct(randomProduct);
+          let price = MongoDB.helpers.getLastSeenProductPrice(randomProduct);
             resolve({
               attachment: randomPhoto,
-              $code: randomProduct.code
+              $code: randomProduct.code,
+              $price: price
             })
         })
         func();
@@ -534,7 +536,6 @@ messageCustomization(message, customObj, senderId){ //replaces Commands from API
   let func = co(function* (){
      // if text repsonse - this customize text response
     if(message.speech){
-
     for(let variable_name in customObj){
     if (message.speech.indexOf(variable_name.toString()) > 0) {
       message.speech = message.speech.replace(variable_name.toString(),customObj[variable_name]);
@@ -548,23 +549,24 @@ messageCustomization(message, customObj, senderId){ //replaces Commands from API
         }
         message.replies = message_replies_concat.split('@@@@'); //Splitting the string back to an array
        }
-      
-     if(message.speech == 'BOT_Show_Pic'){
-        message = {};
-        message.attachment = fb.imageAttachment(customObj.attachment)
-        message.attachment.type = 'image';
-        message.type = 5;
-        console.log(message)
-     }
-     if(message.speech == '$Show_Random_Product'){
-        message = {};
-        message.quick_replies = fb.quickReplyMaker(['product detail','next','add to wish list'])
-        message.attachment = fb.imageAttachment(customObj.attachment)
-        message.attachment.type = 'image';
-        message.type = 5;
-        console.log(message)
+      message = yield BotCommandsClassInstance.processCommand(message.speech,message,customObj);
 
-     }
+    //  if(message.speech == 'BOT_Show_Pic'){
+    //     message = {};
+    //     message.attachment = fb.imageAttachment(customObj.attachment)
+    //     message.attachment.type = 'image';
+    //     message.type = 5;
+    //     console.log(message)
+    //  }
+     
+    //  if(message.speech == 'BOT_Show_Random_Product'){
+    //     message = {};
+    //     message.quick_replies = fb.quickReplyMaker(['product detail','next','add to wish list'])
+    //     message.attachment = fb.imageAttachment(customObj.attachment)
+    //     message.attachment.type = 'image';
+    //     message.type = 5;
+    //     console.log(message)
+    //  }
 
       resolve(message);
         })
