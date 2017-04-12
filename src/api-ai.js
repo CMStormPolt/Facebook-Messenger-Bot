@@ -123,9 +123,7 @@ let processTextMessage = co(function* (message, senderId) {
                            console.log(proccessData);
                               let len = messages.length;
                               for(let i = 0; i < len; i += 1){
-                                  console.log(messages[i])
                                   messages[i] = proccesser.messageCustomization(messages[i],proccessData);
-                                  console.log(messages[i])
                               }
                      }  
                     if (isDefined(responseData) && isDefined(responseData.facebook)) {
