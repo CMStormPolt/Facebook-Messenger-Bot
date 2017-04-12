@@ -120,7 +120,7 @@ let processTextMessage = co(function* (message, senderId) {
                     co(function* (){ 
                         if(action){
                            proccessData =  yield proccesser.processAction(senderId,action,response.result)
-
+                           console.log(proccessData);
                               let len = messages.length;
                               for(let i = 0; i < len; i += 1){
                                   messages[i] = proccesser.messageCustomization(messages[i],proccessData);
@@ -136,7 +136,7 @@ let processTextMessage = co(function* (message, senderId) {
                     let returnData = {
                         messages: messages,
                         response: response
-                    };
+                        };
                     resolve(returnData);
                      }
                  })()

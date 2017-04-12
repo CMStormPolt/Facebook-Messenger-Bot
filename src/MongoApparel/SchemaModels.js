@@ -205,7 +205,7 @@ const EveryUserSchema = new Schema({
                     'f_name':{type: String, required: false},
                     'l_name':{type: String, required: false},
                     'gender':{type: String},
-                    'birthday':Date,
+                    'birthday':{type: Date},
                     'home_town':String,  //a city
                     'living_in':{type: String},  //a city
                     'country': {type: String},
@@ -214,6 +214,7 @@ const EveryUserSchema = new Schema({
                     'profile_pic':[Image], //collects an array of the profile pics of our customers
                     'cover_pic':[Image], //collects an array of the cover pics of our customers
                     'email':{type: String},
+                    'products_seen': []
                     },
             'postal_addresses':[Address], // A collection of all addresses used by the customer
             'shopping_cart':[Cart], //what the customer has currently selected

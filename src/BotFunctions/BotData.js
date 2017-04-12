@@ -355,7 +355,7 @@ class ProccessActioner{
          }
          product_size = product_size.slice(0,-1)
          //sends product price to api ai proccesser
-         console.log(product_size);
+        //  console.log(product_size);
         resolve(
           {
           $product_size: product_size
@@ -366,7 +366,21 @@ class ProccessActioner{
      })
    }   
 
-
+    getRandomProduct(senderId,result){
+      return new Promise(function(resolve,reject){
+        let func = co(function* (){
+          let randomProduct = yield MongoDB.helpers.getRandomProductFromDb();
+          let userUpdated = yield MongoDB.helpers.findByFbIdAndUpdate(senderId,{$push:{'FBinfo.products_seen':randomProduct}});
+          let randomPhoto = MongoDB.helpers.getRandomImageOfProduct(randomProduct);
+          console.log('get random photo =============================================================')
+          console.log(randomPhoto);
+            resolve({
+              attachment: randomPhoto
+            })
+        })
+        func();
+      })
+   }
    // gets names and honorifics for current user 
     greetings(senderId,result){
       return new Promise(function(resolve,reject){
@@ -389,6 +403,7 @@ class ProccessActioner{
     }
 
 
+
     //gets random photo of connected product and sends it to api ai
     getRandomConnectedProductPic(senderId,result){
       return new Promise(function(resolve,reject){
@@ -396,6 +411,7 @@ class ProccessActioner{
           let code = result.parameters.product_code
           let currentProduct = yield MongoDB.helpers.getProductFromDb(code);
           let connectedProduct = yield MongoDB.helpers.getRandomConnectedProduct(currentProduct);
+          let userUpdated = yield MongoDB.helpers.findByFbIdAndUpdate(senderId,{$push:{'FBinfo.products_seen':connectedProduct}});
           let randomPhoto = MongoDB.helpers.getRandomImageOfProduct(connectedProduct);
            resolve({
              attachment: randomPhoto
@@ -403,7 +419,57 @@ class ProccessActioner{
         })
         func();
       })
-    };
+
+    }
+    getLastSeenSizes(senderId,result){
+      return new Promise(function(resolve,reject){
+        MongoDB.helpers.findUserByFbId(senderId)
+                       .then(function(user){
+                         let product = MongoDB.helpers.getLastSeenProductFromDb(user)
+                         let product_size = MongoDB.helpers.getLastSeenProductSize(product);
+                        resolve(
+                          {
+                         $product_size: product_size
+                          });
+                       })
+        })
+    }
+    getLastSeenPrice(senderId,result){
+      return new Promise(function(resolve,reject){
+        MongoDB.helpers.findUserByFbId(senderId)
+                       .then(function(user){
+                         let product = MongoDB.helpers.getLastSeenProductFromDb(user)
+                         let product_price = MongoDB.helpers.getLastSeenProductPrice(product);
+                        resolve(
+                          {
+                         $product_price: product_price
+                          });
+                       })
+        })
+    }
+
+   // gets names and honorifics for current user 
+    greetings(senderId,result){
+      return new Promise(function(resolve,reject){
+        let func = co(function* (){
+          let user = yield MongoDB.helpers.findUserByFbId(senderId);
+          let $mrms = 't/a';
+          if(user.FBinfo.gender == 'male'){
+            $mrms  = 'Mr'
+          } else {
+            $mrms = 'Ms'
+          }
+           resolve({
+             $f_name: user.FBinfo.f_name,
+             $l_name: user.FBinfo.l_name,
+             $mrms: $mrms
+           });
+        })
+        func();
+      })
+    }
+  
+
 
 
     //gets random photo of connected product and sends it to api ai
@@ -462,8 +528,7 @@ getRandomNewArrivalsProductPic(senderId, category){
         }
         message.replies = message_replies_concat.split('@@@@'); //Splitting the string back to an array
        }
-
-     if(message.speech == 'Show_Pic'){
+     if(message.speech == 'this message will be redacted'){
         message = {};
         message.attachment = fb.imageAttachment(data.attachment)
         message.attachment.type = 'image';

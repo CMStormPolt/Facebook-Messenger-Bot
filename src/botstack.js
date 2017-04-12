@@ -183,7 +183,7 @@ class BotStack {
                     let messages = entry.messaging;
                     let pageId = entry.id;
                     for (let message of messages) {
-                        console.log(message.message);
+                        // console.log(message.message);
                         let senderID = message.sender.id;
                         //check Reddis if New Session
                         let isNewSession = yield sessionStore.checkExists(senderID);
