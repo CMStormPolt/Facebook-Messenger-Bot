@@ -317,6 +317,7 @@ class ProccessActioner{
           })
    }
 
+
    // gets the product by its code and resolves its price
    getPriceProduct(senderId,result){
      //gets code from context about product
@@ -337,6 +338,8 @@ class ProccessActioner{
      func();
      })
    }
+
+
    // finds product and returs its size
    getSizeProduct(senderId,result){
      //gets code from context about product
@@ -362,6 +365,7 @@ class ProccessActioner{
      func();
      })
    }   
+<<<<<<< HEAD
     getRandomProduct(senderId,result){
       return new Promise(function(resolve,reject){
         let func = co(function* (){
@@ -377,6 +381,32 @@ class ProccessActioner{
         func();
       })
    }
+=======
+
+
+   // gets names and honorifics for current user 
+    greetings(senderId,result){
+      return new Promise(function(resolve,reject){
+        let func = co(function* (){
+          let user = yield MongoDB.helpers.findUserByFbId(senderId);
+          let $mrms = 't/a';
+          if(user.FBinfo.gender == 'male'){ //PROBLEM - If we dont know the gender? Always Ms? - Danny
+            $mrms  = 'Mr'
+          } else {
+            $mrms = 'Ms'
+          }
+           resolve({
+             $f_name: user.FBinfo.f_name,
+             $l_name: user.FBinfo.l_name,
+             $mrms: $mrms
+           });
+        })
+        func();
+      })
+    }
+
+
+>>>>>>> 72e27bef5d7911d0657828a421812274346a8552
     //gets random photo of connected product and sends it to api ai
     getRandomConnectedProductPic(senderId,result){
       return new Promise(function(resolve,reject){
@@ -392,6 +422,7 @@ class ProccessActioner{
         })
         func();
       })
+<<<<<<< HEAD
     }
     getLastSeenSizes(senderId,result){
       return new Promise(function(resolve,reject){
@@ -440,18 +471,24 @@ class ProccessActioner{
         func();
       })
     }
+=======
+    };
+
+>>>>>>> 72e27bef5d7911d0657828a421812274346a8552
 
     //gets random photo of connected product and sends it to api ai
-    getRandomNewArrivalsProductPic(senderId,result){
+getRandomNewArrivalsProductPic(senderId, category){
       //Setup dates for the Mongoose query for new arrivals
+      let monthCount = 1
         var now = new Date()
 
-          if (new Date().getMonth()<2){
-              var lastYear =  (new Date().getYear()-1)
+          if (new Date().getMonth()<=monthCount){
+              var lastYear =  (new Date().getFullYear()-1)
           }
-          else {var lastYear =  new Date().getYear()};
+          else {var lastYear =  new Date().getFullYear()};
 
-        var lastMonth = (new Date().getMonth()-1)%12
+        var lastMonth = (new Date().getMonth()-monthCount) //Returns one the preset amount of months behind
+        if(lastMonth < 0){lastMonth = 12-monthCount} //corrects the month for January -1 to 12
         var lastMonthDate = new Date().getDate() //Same day of tyhe month as today
 
         var NewArrivalsDate = new Date()
@@ -459,17 +496,17 @@ class ProccessActioner{
               NewArrivalsDate.setMonth(lastMonth)
               NewArrivalsDate.setDate(lastMonthDate)
               //END of Setup dates for the Mongoose query for new arrivals
-
+              
       return new Promise(function(resolve,reject){
         let func = co(function* (){
-          let code = result.parameters.product_code
+          let NewArrivals = yield MongoDB.helpers.findProductsbyDateRange(NewArrivalsDate, now)
+          let randomNumber = Math.floor(Math.random() * NewArrivals.length);
+          let code = NewArrivals[randomNumber].code
+          console.log(code)
           let currentProduct = yield MongoDB.helpers.getProductFromDb(code);
-          let connectedProduct = yield MongoDB.helpers.getRandomConnectedProduct(currentProduct);
-          let randomPhoto = MongoDB.helpers.getRandomImageOfProduct(connectedProduct);
-          // console.log(randomPhoto);
-           resolve({
-             attachment: randomPhoto
-           });
+          let randomPhoto = MongoDB.helpers.getRandomImageOfProduct(currentProduct);
+          console.log(randomPhoto);
+          resolve({attachment: randomPhoto});
         })
         func();
       })
@@ -502,8 +539,9 @@ class ProccessActioner{
         message.type = 5;
      }
         return message
-    }
-  }
+
+   }
+}
 module.exports.ProccessActioner = ProccessActioner;
 
 
