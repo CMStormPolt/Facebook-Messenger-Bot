@@ -535,7 +535,7 @@ messageCustomization(message, customObj, senderId){ //replaces Commands from API
     for(let variable_name in customObj){
     if (message.speech.indexOf(variable_name.toString()) > 0) {
       message.speech = message.speech.replace(variable_name.toString(),customObj[variable_name]);
-      message.speech = message.speech.replace('$code',code);
+      //message.speech = message.speech.replace('$code',code);
     }}
    } 
    // if message is with quick replies - customize the quick replies

@@ -8,8 +8,3 @@ ParaBot.startServer()
 
 
 
-let GetRandomNewProduct = require('./src/BotFunctions/BotData').ProccessActioner
-let Test = new GetRandomNewProduct()
-let gg = Test.getRandomNewArrivalsProductPic()
-
-
