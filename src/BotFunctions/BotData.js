@@ -528,6 +528,59 @@ getRandomNewArrivalsProductPic(senderId, category){
         func();
       })
     }
+    // adds a product to a user wish list
+    addProductToWishList(senderId,result){
+      return new Promise(function(resolve,reject){
+        let func = co(function*(){
+          // gets user from DB by its facebook ID
+          let user = yield MongoDB.helpers.findUserByFbId(senderId);
+          if(user){
+            //if user exists adds the product to his wish list
+            let productAdded = yield MongoDB.helpers.mongoDB_addProductToUserWishList(user);
+            if(productAdded){
+              //if product was added successfully resolves with true
+              resolve(true);
+            } // if it wasn't added successfully resolve with false
+              else {
+              resolve(false);
+            }
+          } // if no user was found or MongoDB error resolves with false 
+          else{
+            resolve(false);
+          }
+        })
+        func()
+      })
+    }
+    //gets the bestsellers products and filters from the already seen by user
+    getBestSellersProducts(senderId,result){
+      return new Promise(function(resolve,reject){
+        let func = co(function*(){
+          //finds user by fb ID
+          let user = yield MongoDB.helpers.findUserByFbId(senderId);
+          //function from Mongo module (apiHelpers) to get best sellers products
+          let bestSellersProducts = yield MongoDB.helpers.getBestSellersProducts();
+          //filters the products by products already seen by the user
+          let productsToShow = yield MongoDB.helpers.filterProductsToShowWithSeenProducts(bestSellersProducts,user);
+           console.log(productsToShow.length);
+          //gets a random product from the products to show array
+          let randomProduct = MongoDB.helpers.getRandomProductFromArray(productsToShow);
+          //adds the product to the user seen products array
+          let updateProductSeen = yield MongoDB.helpers.findByFbIdAndUpdate(senderId,{$push:{'FBinfo.products_seen':randomProduct}});
+          //gets a random photo and the price of the product 
+          let randomPhoto = MongoDB.helpers.getRandomImageOfProduct(randomProduct);
+          let price = MongoDB.helpers.getLastSeenProductPrice(randomProduct);
+          //resolves with the product picture and additional data we need to pass to the message customizer
+            resolve({
+              attachment: randomPhoto,
+              $code: randomProduct.code,
+              $price: price
+            })
+        })
+        func()
+      })
+    }
+
 
 
 // customize a message if custom customObj from bot action is presented and returs it to api ai proccessor

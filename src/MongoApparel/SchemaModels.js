@@ -214,7 +214,8 @@ const EveryUserSchema = new Schema({
                     'profile_pic':[Image], //collects an array of the profile pics of our customers
                     'cover_pic':[Image], //collects an array of the cover pics of our customers
                     'email':{type: String},
-                    'products_seen': []
+                    'products_seen': [],
+                    'wish_list':[]
                     },
             'postal_addresses':[Address], // A collection of all addresses used by the customer
             'shopping_cart':[Cart], //what the customer has currently selected

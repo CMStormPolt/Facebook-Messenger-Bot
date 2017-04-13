@@ -467,3 +467,77 @@ function findProductsbyDateRange(startDate, endDate){
     }
 module.exports.findProductsbyDateRange = findProductsbyDateRange;
 
+function mongoDB_addProductToUserWishList(user){
+    return new Promise(function(resolve,reject){
+        let product = getLastSeenProductFromDb(user);
+        user.FBinfo.wish_list.push(product);
+        user.save().then(function(savedResult){
+            resolve(true);
+        })
+            .catch(function(MongoError){
+                resolve(console.log(MongoError));
+            })
+    })
+}
+module.exports.mongoDB_addProductToUserWishList = mongoDB_addProductToUserWishList;
+
+function getBestSellersProducts(){
+    return new Promise(function(resolve,reject){
+        schemas.Product.find().limit(4).then(function(products){
+            if(products){
+                resolve(products);
+            } else {
+                resolve(false);
+            }
+        })
+    })
+}
+module.exports.getBestSellersProducts = getBestSellersProducts;
+
+//filters the product by removing the products the user has already seen
+function filterProductsToShowWithSeenProducts(allProducts,user){
+    return new Promise(function(resolve,reject){
+        let func = co(function*(){
+    //gets the seen products array from the user
+    let seenProducts = user.FBinfo.products_seen;
+    //the array we will return to show
+    let productsToShow = [];
+    // filter the allProducts array by removing the already seen products
+    productsToShow = allProducts.filter( function( productAll ) {
+     return !(seenProducts.find( function(seenProduct){
+      return productAll.code == seenProduct.code
+         }));
+    });
+    //if user has seen all products cleans user products seen and returns all the products
+    if(productsToShow.length == 0){
+        yield deleteProductsSeenFromUser(user)
+        resolve(allProducts)
+    }
+    //resolves with the filtered products we want to show
+    resolve(productsToShow);
+        })
+        func();
+    })
+}
+module.exports.filterProductsToShowWithSeenProducts = filterProductsToShowWithSeenProducts;
+
+//gets a random product from already recieved array and returns it
+function getRandomProductFromArray(productsArray){
+    let len = productsArray.length;
+    let randomNumber = Math.floor(Math.random() * len);
+    let randomProduct = productsArray[randomNumber];
+    return randomProduct;
+}
+module.exports.getRandomProductFromArray = getRandomProductFromArray;
+
+// cleans all products from user products seen array
+function deleteProductsSeenFromUser(user){
+    return new Promise(function(resolve,reject){
+        user.FBinfo.products_seen = [];
+        user.save()
+            .then(function(mongoResult){
+                resolve(true);
+            })
+    })   
+}
+module.exports.deleteProductsSeenFromUser = deleteProductsSeenFromUser;
