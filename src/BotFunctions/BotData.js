@@ -528,6 +528,7 @@ getRandomNewArrivalsProductPic(senderId, category){
         func();
       })
     }
+
     // adds a product to a user wish list
     addProductToWishList(senderId,result){
       return new Promise(function(resolve,reject){
@@ -562,7 +563,6 @@ getRandomNewArrivalsProductPic(senderId, category){
           let bestSellersProducts = yield MongoDB.helpers.getBestSellersProducts();
           //filters the products by products already seen by the user
           let productsToShow = yield MongoDB.helpers.filterProductsToShowWithSeenProducts(bestSellersProducts,user);
-           console.log(productsToShow.length);
           //gets a random product from the products to show array
           let randomProduct = MongoDB.helpers.getRandomProductFromArray(productsToShow);
           //adds the product to the user seen products array

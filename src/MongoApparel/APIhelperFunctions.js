@@ -537,7 +537,7 @@ function deleteProductsSeenFromUser(user){
         user.save()
             .then(function(mongoResult){
                 resolve(true);
-            })
+         })
     })   
 }
 module.exports.deleteProductsSeenFromUser = deleteProductsSeenFromUser;
