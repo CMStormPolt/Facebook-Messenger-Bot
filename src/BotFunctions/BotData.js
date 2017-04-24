@@ -767,31 +767,11 @@ function proccessFbLogin(FBcode){
    }
 module.exports.proccessFbLogin = proccessFbLogin;
 
-function getAppAccessToken(){
-  return new Promise(function(resolve,reject){
-    fbInstance.api('oauth/access_token', {
-    client_id: '125824107950843',
-    client_secret: '7b0313aaf169a871f89b9056ae198029',
-    grant_typ: 'client_credentials'
-}, function (res) {
-    if(!res || res.error) {
-        console.log(!res ? 'error occurred' : res.error);
-        return;
-    }
-    console.log(res);
-    var accessToken = res.access_token;
-    var expires = res.expires_in;
-    resolve(accessToken);
-   });
-  })
-}
-
-
 
 
 function testAnything(){
   return new Promise(function(resolve,reject){
-    // getAppAccessToken();
+ 
     resolve(true);
   })
 }

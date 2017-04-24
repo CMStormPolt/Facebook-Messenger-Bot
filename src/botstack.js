@@ -204,7 +204,8 @@ class BotStack {
                                                     // if(isnewSession){
                                                     //     let userProccessed = yield self.MongoDB.helpers.proccessUser(senderID,pageId);
                                                     // }
-                        let userToBeProccessed = yield self.MongoDB.helpers.proccessUser(senderID,pageID,message); //Temporarily for testing as if we are a new user                        
+                           let userToBeProccessed; // only until test review finish, delete and uncomment following line then
+                        // let userToBeProccessed = yield self.MongoDB.helpers.proccessUser(senderID,pageID,message); //Temporarily for testing as if we are a new user  // commented for app review test uncomment when review finish                     
                         const isPostbackMessage = message.postback ? true : false;
                         //Checks if message is a Quick Reply
                         let isQuickReply = false
