@@ -7,7 +7,7 @@ const co = Promise.coroutine;
 const fs = Promise.promisifyAll(require('fs'))
 const http = require('http');
 const botData = require('../BotFunctions/BotData');
-
+const fb = require('../fb');
 //API response functions
 function _respond(res, next, status, data, http_code){
     let response ={
@@ -292,7 +292,7 @@ module.exports.CreateProduct = CreateProduct;
 
 
     //creates new user and saves it to db
-function createUser(senderId,pageId){
+function createUser(senderId,pageId,mainID){
     return new Promise(function(resolve,reject){
         let newUser = new schemas.User;
         let fbinfo;
@@ -304,7 +304,8 @@ function createUser(senderId,pageId){
                 'SenderId': senderId,
                 'f_name': fbinfo.first_name,
                 'l_name': fbinfo.last_name,
-                'gender': fbinfo.gender
+                'gender': fbinfo.gender,
+                'fb_main_id': mainID
             }
             let savedUser = yield newUser.save();
             resolve(savedUser);
@@ -327,14 +328,29 @@ function findUserByFbId(senderId){
 module.exports.findUserByFbId = findUserByFbId;
 
 //checks if user is registered in db
-function proccessUser(senderId,pageId){
+function proccessUser(senderId,pageId,message){
     return new Promise(function(resolve,reject){
         const func = co(function* (){
         let isOldUser = yield findUserByFbId(senderId);
-        if (isOldUser){
+        let userMainId = null;
+        //checks if user is registered in MongoDB and if he has main fb id
+        if (isOldUser && isOldUser.FBinfo.fb_main_id){
             resolve(false);
+        } else if(isOldUser){
+            if(message.message){
+            //gets the main unscoped facebook user id 
+           userMainId = yield fb.getUserMainId(senderId,message.message);
+           isOldUser.FBinfo.fb_main_id = userMainId;
+           let userUpdated = yield isOldUser.save();
+           resolve(false);
+          } 
         } else {
-           let newUser = yield createUser(senderId,pageId);
+          //checks if message has message object so we can get the message id
+          if(message.message){
+            //gets the main unscoped facebook user id 
+           userMainId = yield fb.getUserMainId(senderId,message.message);
+         }
+           let newUser = yield createUser(senderId,pageId,userMainId);
            resolve(newUser);
             }
         })
@@ -342,7 +358,6 @@ function proccessUser(senderId,pageId){
     })
 }
 module.exports.proccessUser = proccessUser;
-
 
 //finds and updates user
 function findByFbIdAndUpdate(senderId,args){
@@ -352,7 +367,6 @@ function findByFbIdAndUpdate(senderId,args){
     })
 }
 module.exports.findByFbIdAndUpdate = findByFbIdAndUpdate;
-
 
 //finds total number of collection items
 function findCountFromDb(collectionName){
@@ -369,6 +383,7 @@ function getProductFromDb(productCode){
                        .catch(reject);
     })
 }
+
 module.exports.getProductFromDb = getProductFromDb;
 //gets a random product from the db
 function getRandomProductFromDb(){
@@ -541,3 +556,42 @@ function deleteProductsSeenFromUser(user){
     })   
 }
 module.exports.deleteProductsSeenFromUser = deleteProductsSeenFromUser;
+
+// gets the delivery times if a country is provided and returns it to be used 
+function getDeliveryTime(country){
+    let fastCountries = ['bulgaria','greece'];
+    let slowCountries = ['romania','serbia'];
+    if (fastCountries.indexOf(country.toLowerCase()) > -1){
+        let delivery_days = 3;
+        return delivery_days;
+    } else if (slowCountries.indexOf(country.toLowerCase()) > -1){
+        let delivery_days = 5;
+        return delivery_days;
+    }
+} 
+module.exports.getDeliveryTime = getDeliveryTime;
+
+function createAndSaveComplaint(user_FB_ID,complaint_category,complaint_text){
+    return new Promise(function(resolve,reject){
+        schemas.Complaint.create({
+            'user_FB_ID': user_FB_ID,
+            'category': complaint_category,
+            'text': complaint_text
+        }).then(function(MongoResult){
+            resolve(MongoResult);
+        }).catch(console.log);
+    })
+}
+module.exports.createAndSaveComplaint = createAndSaveComplaint;
+
+// finds a user by his unscoped main FB ID
+function findUserByMainFbId(main_FB_ID){
+    return new Promise(function(resolve,reject){
+        schemas.User.findOne({'FBinfo.fb_main_id': main_FB_ID})
+                    .then(function(user){
+                        resolve(user);
+                    })
+                    .catch(reject);
+    })
+}
+module.exports.findUserByMainFbId = findUserByMainFbId;

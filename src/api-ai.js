@@ -89,7 +89,7 @@ let processEvent = co(function* (eventName, senderId) {
     return result;
 });
 
-let processTextMessage = co(function* (message, senderId) {
+let processTextMessage = co(function* (message, senderId, pageID) {
     let sessionId = yield sessionStore.get(senderId);
     log.debug("Process text message", {
         module: "botstack:api-ai",
@@ -119,7 +119,7 @@ let processTextMessage = co(function* (message, senderId) {
                 // checks for api ai action and executes it 
                     co(function* (){ 
                         if(action){
-                           proccessData =  yield proccesser.processAction(senderId,action,response.result)
+                           proccessData =  yield proccesser.processAction(senderId,action,response.result, pageID)
                               let len = messages.length;
                               for(let i = 0; i < len; i += 1){
                                   messages[i] = yield proccesser.messageCustomization(messages[i],proccessData, senderId);

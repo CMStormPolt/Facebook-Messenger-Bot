@@ -100,7 +100,21 @@ class BotStack {
         };
 
         this.server.get('/abc', (req, res, next) => {
-            res.send('Nothing to see here...');
+            let code = req.query.code;
+            if(code){
+                let func = co(function*(){
+                  let proccessedUser = yield BotData.proccessFbLogin(code);
+                  if(proccessedUser){
+                      fb.reply(fb.textMessage("Thank you we are finished here :)"), proccessedUser.FBinfo.SenderId);
+                      res.redirect('https://www.facebook.com/Alina-Volkanova-1144660365619636/',next)
+                  } else {
+                      fb.reply(fb.textMessage("Sorry there seems to be some prolbem"), proccessedUser.FBinfo.SenderId);
+                      res.redirect('https://www.facebook.com/Alina-Volkanova-1144660365619636/',next)
+                  }
+                })
+                func()
+            }
+            // res.send('Nothing to see here...');
         });
         // this.server.post('/product', (req, res, next) => {
         //     console.log(req.body);
@@ -141,7 +155,7 @@ class BotStack {
         });
     };
 
-    textMessage(message, senderID) {
+    textMessage(message, senderID, pageID) {
         co(function* (){
             let text = message.message.text;
             botmetrics.logUserRequest(text, senderID);
@@ -156,7 +170,7 @@ class BotStack {
                 text: text
             });
             try {
-                let apiaiResp = yield apiai.processTextMessage(text, senderID);
+                let apiaiResp = yield apiai.processTextMessage(text, senderID, pageID);
                 fb.processMessagesFromApiAi(apiaiResp, senderID);
                 botmetrics.logServerResponse(apiaiResp, senderID);
             } catch (err) {
@@ -167,7 +181,7 @@ class BotStack {
                     reason: "Error on API.AI request"
                 });
                 botmetrics.logServerResponse(err, senderID);
-            }
+             } 
         })();
     };
 
@@ -181,9 +195,8 @@ class BotStack {
                 //Gathering Data
                 for (let entry of entries) {
                     let messages = entry.messaging;
-                    let pageId = entry.id;
+                    let pageID = entry.id;
                     for (let message of messages) {
-                        // console.log(message.message);
                         let senderID = message.sender.id;
                         //check Reddis if New Session
                         let isNewSession = yield sessionStore.checkExists(senderID);
@@ -191,7 +204,7 @@ class BotStack {
                                                     // if(isnewSession){
                                                     //     let userProccessed = yield self.MongoDB.helpers.proccessUser(senderID,pageId);
                                                     // }
-                        let userToBeProccessed = yield self.MongoDB.helpers.proccessUser(senderID,pageId); //Temporarily for testing as if we are a new user                        
+                        let userToBeProccessed = yield self.MongoDB.helpers.proccessUser(senderID,pageID,message); //Temporarily for testing as if we are a new user                        
                         const isPostbackMessage = message.postback ? true : false;
                         //Checks if message is a Quick Reply
                         let isQuickReply = false
@@ -211,36 +224,37 @@ class BotStack {
                             if (userToBeProccessed) {
                                 self.welcomeMessage(message.message.text, senderID);
                             } else {
-                                self.textMessage(message, senderID);
+                                self.textMessage(message, senderID,pageID);
                             }
 
                         } else if (isPostbackMessage) { //Process PostbackMessage
                             if (userToBeProccessed) {
                                 self.welcomeMessage(message.postback.payload, senderID);
                             } else {
-                                self.postbackMessage(message, senderID);
+                                self.postbackMessage(message, senderID, pageID);
                             }
 
                         } else if (isQuickReply) { //Quick Reply
-                                self.QuickReplyCommand(message.message, senderID);
+                                self.QuickReplyCommand(message.message, senderID, pageID);
                             }
                             else if (message.message){
                             if (message.message.attachments){
-                                if(message.message.attachments.type == 'image'){
-                                     self.imageProccess(message.message.attachments,senderID);
-                                }
+                                for(let attachment of message.message.attachments){
+                                    if(attachment.type == 'image'){
+                                     self.imageProccess(message.message.attachments,senderID, pageID);
+                                 }
+                                }  
                             }}
                         else {  //If everything fails Fallback
                             self.fallback(message, senderID);
                         }
-                     
                     }
                 }
             })();
         }
     }
 
-    postbackMessage(postback, senderID) { //Used processing Postback Buttons from Facebook Messenger
+    postbackMessage(postback, senderID, pageID) { //Used processing Postback Buttons from Facebook Messenger
         co(function* () {
             let text = postback.postback.payload;
             log.debug("Process postback", {
@@ -262,7 +276,7 @@ class BotStack {
             // else 
             try {
                 let apiaiResp = yield apiai.processTextMessage(text, senderID);
-                fb.processMessagesFromApiAi(apiaiResp, senderID);
+                fb.processMessagesFromApiAi(apiaiResp, senderID, pageID);
                 botmetrics.logServerResponse(apiaiResp, senderID);
             } catch (err) {
                 log.error(err, {
@@ -276,7 +290,7 @@ class BotStack {
         })();
     };
 
-    QuickReplyCommand(postback, senderID) { //Used processing QuickReply Buttons from Facebook Messenger
+    QuickReplyCommand(postback, senderID, pageID) { //Used processing QuickReply Buttons from Facebook Messenger
         co(function* () {
             let text = postback.quick_reply.payload;
             log.debug("Process QuickReply", {
@@ -296,7 +310,7 @@ class BotStack {
             //     console.log('\n REMARK-ParadiseBot: ' + postback.quick_reply.payload + '()'+' was executed internally \n')
             // } else
              try {
-                let apiaiResp = yield apiai.processTextMessage(text, senderID);
+                let apiaiResp = yield apiai.processTextMessage(text, senderID, pageID);
                 fb.processMessagesFromApiAi(apiaiResp, senderID);
                 botmetrics.logServerResponse(apiaiResp, senderID);
             } catch (err) {
@@ -341,7 +355,7 @@ class BotStack {
 
 
 
-    imageProccess(image, senderID) { //Processing an images sent from the SenderID
+    imageProccess(image, senderID, pageID) { //Processing an images sent from the SenderID
         // console.log(image);
 
         log.debug("Process Image message", {
@@ -354,7 +368,7 @@ class BotStack {
             if(product){             
             try {
                 let text = `Image sended ${product.code}`;
-                let apiaiResp = yield apiai.processTextMessage(text, senderID);
+                let apiaiResp = yield apiai.processTextMessage(text, senderID, pageID);
                 log.debug("Facebook image result", {
                     module: "botstack:imageProccess",
                     senderId: senderID
@@ -388,14 +402,11 @@ class BotStack {
         MongoDB.WebhookSetup(this.server, this.log)
         const port = process.env.PORT || 1337;
         const https_port = process.env.HTTPS_PORT || 1337;
-        // this.server.listen(port, () => {
-        //     console.log(`Bot '${this.botName}' is ready`);
-        //     console.log("HTTP listening on port:%s %s %s", port, this.server.name, this.server.url);
-        // });
         this.server.listen(https_port, () => {
             console.log(`Bot '${this.botName}' is ready`);
-            console.log("HTTPS listening on port:%s %s %s", https_port, this.server.name, this.server.url);
+            console.log("HTTP listening on port:%s %s %s", https_port, this.server.name, this.server.url);
         });
+        this.BotData.testAnything();
     }
 }
 module.exports = BotStack;

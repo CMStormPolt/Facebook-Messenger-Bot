@@ -9,7 +9,6 @@ const Q = require('q');
 const BotData = require('./BotFunctions/BotData')
 
 let processMessagesFromApiAi = co(function* (apiaiResponse, senderID) {
-    console.log(apiaiResponse);
     if (!'messages' in apiaiResponse) {
         log.debug("Response from API.AI not contains messages", {
             module: "botstack:fb",
@@ -471,28 +470,140 @@ const reply = co(function* (message, senderId) {
     return deferred.promise;
 })
 
-function testFbGraph(){
+function testFbGraph(senderId,message){
     let reqData = {
-        url: 'https://graph.facebook.com/423878927972201',
+        url: 'https://graph.facebook.com/v2.6/me/messages',
         qs: {
             access_token: process.env.FB_PAGE_ACCESS_TOKEN
         },
-        method: 'GET',
-        // json: {
-        //     recipient: {
-        //         id: senderId
-        //     },
-        //     message: message
-        // }
+        method: 'POST',
+        json: {
+            recipient: {
+                id: senderId
+            },
+            message: message
+        }
     };
     request(reqData,function(err,response,body){
         if(err){
             console.log(err)
         } else {
-            console.log(response)
+            console.log(body)
         }
     })
 }
+
+//gets the userMainId - unscoped and sends it for later use
+function getUserMainId(senderId,message){
+    return new Promise(function(resolve,reject){
+        let url = 'https://graph.facebook.com/v2.6//m_' + message.mid + '?fields=from';
+        let reqData = {
+        url: url,
+        qs: {
+            access_token: process.env.FB_PAGE_ACCESS_TOKEN
+        },
+        method: 'GET',
+        json: {}
+    };
+    request(reqData,function(err,response,body){
+        if(err){
+            console.log(err)
+        } else {
+            resolve(body.from.id);
+        }
+      })
+    })
+}
+module.exports.getUserMainId = getUserMainId;
+
+//sends the complaint to the facebook agent
+function sendComplaintToAgent(agentID,complaint,chatLink){
+    return new Promise(function(resolve,reject){
+    let text = `The following user has a complaint: \n ${complaint.text} \n ${chatLink}`;
+    let message = {text: text}
+    let reqData = {
+        url: 'https://graph.facebook.com/v2.6/me/messages',
+        qs: {
+            access_token: process.env.FB_PAGE_ACCESS_TOKEN
+        },
+        method: 'POST',
+        json: {
+            recipient: {
+                id: agentID
+            },
+            message: message
+        }
+    };
+    request(reqData,function(err,response,body){
+        if(err){
+            console.log(err)
+            reject(err);
+        } else {
+            console.log('inside fb module line 538 ============================================')
+            console.log(body)
+            resolve(body);
+        }
+      })
+    })   
+}
+module.exports.sendComplaintToAgent = sendComplaintToAgent;
+
+function getPageConversations(pageId){
+    return new Promise(function(resolve,reject){
+      let reqData = {
+        url: `https://graph.facebook.com/v2.6/${pageId}/conversations?fields=link,participants`,
+        qs: {
+            access_token: process.env.alinaPageExtendedToken
+    },
+        method: 'GET',
+        json: {
+        }
+    };
+    request(reqData,function(err,response,body){
+        if(err){
+            console.log(err)
+            reject(err);
+        } else {
+            // console.log('inside fb module line 566 ============================================')
+            // console.log(body)
+            resolve(body.data);
+        }
+      })  
+    })
+}
+module.exports.getPageConversations = getPageConversations;
+
+// gets the user main unscoped ID from the provided accessToken
+function getUserMainIdByAccessToken(accessToken){
+    return new Promise(function(resolve,reject){
+        let url = 'https://graph.facebook.com/v2.6/me?fields=id';
+        let reqData = {
+        url: url,
+        qs: {
+            access_token: accessToken
+        },
+        method: 'GET',
+        json: {}
+    };
+    request(reqData,function(err,response,body){
+        if(err){
+            console.log(err)
+        } else {
+            resolve(body.id);
+        }
+      })
+    })
+}
+module.exports.getUserMainIdByAccessToken = getUserMainIdByAccessToken;
+
+
+
+
+
+
+
+
+
 
 
 

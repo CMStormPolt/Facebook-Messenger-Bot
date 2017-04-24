@@ -13,6 +13,8 @@ const co = require('bluebird').coroutine;
 let fakeUser = require('./FakeUser.js').FakeUser;
 let schemas = require('./SchemaModels')
 
+let fb = require('../fb.js')
+
 //MongoDB Setup
 var requests = 0  //total requests counter made for the session
 var request_last = Date //Plans: if connection idle for 5 min=>close, on.request, open connection
@@ -57,5 +59,4 @@ helpers.CreateHelperDbs(mongoose) //checks if id tables have been initiated and 
 // helpers.findByFbIdAndUpdate('1256338254484843',{$push:{'FBinfo.products_seen':'randomProduct'}})
 //        .then(console.log);
 // helpers.getBestSellersProducts().then(console.log);
-
 

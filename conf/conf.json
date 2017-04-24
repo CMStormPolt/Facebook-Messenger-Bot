@@ -12,8 +12,8 @@
         },
         {
           "type": "postback",
-          "title": "Promo Offers",
-          "payload": "startOffers"
+          "title": "Report a Problem",
+          "payload": "Report a Problem"
         }
   ],
   "welcomeText": "Welcome to Boutique Paradise"

@@ -167,6 +167,23 @@ const HelperDbs = new Schema({    //Create a new FB Page under the bot control
                         })
         module.exports.HelperDbs = mongoose.model('HelperDbs', HelperDbs);
 
+        // model for the complaints schema
+ const Complaint = new Schema({
+        'user_FB_ID': {type: String},
+        'category': {type: String},
+        'text': {type: String},
+        'date': {type: Date, default: Date.now},
+        'page': {type: String}
+        })        
+        module.exports.Complaint = mongoose.model('Complaint',Complaint)
+        
+ const AccessToken = new Schema({
+        'user_FB_ID': {type: String},
+        'category': {type: String},
+        'text': {type: String}
+        })        
+        module.exports.AccessToken = mongoose.model('AccessToken',AccessToken);
+        
         //=====================Users Database=======================
 
 const EveryUserSchema = new Schema({
@@ -202,6 +219,7 @@ const EveryUserSchema = new Schema({
                         },
             'FBinfo':{
                     'SenderId':{type: String}, //the user's global facebook Id.
+                    'Token': {type: String}, // the token used for graph api calls
                     'f_name':{type: String, required: false},
                     'l_name':{type: String, required: false},
                     'gender':{type: String},
@@ -209,6 +227,7 @@ const EveryUserSchema = new Schema({
                     'home_town':String,  //a city
                     'living_in':{type: String},  //a city
                     'country': {type: String},
+                    'fb_main_id': {type: String},
                     'followers':Number,
                     'age':Number,
                     'profile_pic':[Image], //collects an array of the profile pics of our customers

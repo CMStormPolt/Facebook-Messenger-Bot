@@ -2,9 +2,18 @@
 const fb = require("../fb.js");
 const Promise = require('bluebird');
 const co = Promise.coroutine
-const {FB, FacebookApiException} = require("fb")
+const FB = require("fb")
 const time = require('date-and-time')
 const fs = require('fs')
+
+let fbOptions = {
+  'appId': '125824107950843',
+  'appSecret': '7b0313aaf169a871f89b9056ae198029',
+  'Promise': Promise,
+  // 'redirectUri': 'https://www.facebook.com/Alina-Volkanova-1144660365619636/'
+  'redirectUri': 'https://6f5a9032.ngrok.io/abc'
+}
+let fbInstance = new FB.Facebook(fbOptions);
 
 const MongoDB = require('../MongoApparel/MongoDB')
 const BotCommandsClass = require('./BotCommandsClass').BotCommandsClass;
@@ -22,6 +31,7 @@ function SwitchPback2Reply(PostbackPayload){
     }
     return location
 }
+
 
 const BotCommands = ['BOT_Track_Suits','FAQdelivery','startFAQ', 'startfindProducts', 'startOffers', 'startGPSpics', 'BOTOn_Sale']
 exports.BotCommands = BotCommands
@@ -282,9 +292,9 @@ class ProccessActioner{
   constructor(){
   }
   //main function calls other class methods
-  processAction(senderId,action,result){
+  processAction(senderId,action,result, pageID){
       if(this[action]){
-        return Promise.resolve(this[action](senderId,result))
+        return Promise.resolve(this[action](senderId,result,pageID))
     } else {
       return Promise.resolve(true);
     }
@@ -421,7 +431,6 @@ class ProccessActioner{
         })
         func();
       })
-
     }
     getLastSeenSizes(senderId,result){
       return new Promise(function(resolve,reject){
@@ -462,13 +471,13 @@ class ProccessActioner{
                             $product_price: product_price
                           });
                        })
-      })
+         })
     }
 
    // gets names and honorifics for current user 
     greetings(senderId,result){
       return new Promise(function(resolve,reject){
-        let func = co(function* (){
+          let func = co(function* (){
           let user = yield MongoDB.helpers.findUserByFbId(senderId);
           let $mrms = 't/a';
           if(user.FBinfo.gender == 'male'){
@@ -580,7 +589,60 @@ getRandomNewArrivalsProductPic(senderId, category){
         func()
       })
     }
+    //gets the user location if the user has registered one
+    getUserLocation(senderId,result){
+      return new Promise(function(resolve,reject){
+        let func = co(function*(){
+          let user = yield MongoDB.helpers.findUserByFbId(senderId);
+            if(user){
+              let country = user.FBinfo.country;
+              resolve({$country: country});
+             } else {
+              resolve(false);
+            }
+        })
+        func()
+      })
+    }
+   // gets the delivery time for the user and sends it to the message customize as variable
+   getUserDeliveryTime(senderId,result){
+     return new Promise(function(resolve,reject){
+       let func = co(function*(){
+        let user = yield MongoDB.helpers.findUserByFbId(senderId);
+        let country;
+        if(result.resolvedQuery == 'Yes'){
+          country = user.FBinfo.country; 
+        } else {
+          country = result.parameters.country;
+        }
+        let delivery_days = MongoDB.helpers.getDeliveryTime(country);
+        resolve({$delivery_days: delivery_days})
+       })
+       func()
+     })
+   }
 
+   createAndSaveComplaint(senderId,result,pageID){
+    return new Promise(function(resolve,reject){
+      let func = co(function*(){
+        let user = yield MongoDB.helpers.findUserByFbId(senderId)
+        console.log(pageID)
+        let conversations = yield fb.getPageConversations(pageID);
+        console.log(conversations);
+        let chatLink = getConversationLink(user,conversations)
+        let problem_category = result.contexts.find(function(context){
+          return  context.name == 'complaint-category-context';
+        }).parameters.about
+        let problem_text = result.parameters.problem_details;
+        let complaintSaved = yield MongoDB.helpers.createAndSaveComplaint(senderId,problem_category,problem_text);
+        let complaintSendToAgend = yield fb.sendComplaintToAgent('1256338254484843',complaintSaved,chatLink);
+        resolve({
+          $complaint_saved: complaintSaved
+        })
+      })
+      func();
+    })
+   }
 
 
 // customize a message if custom customObj from bot action is presented and returs it to api ai proccessor
@@ -598,6 +660,9 @@ messageCustomization(message, customObj, senderId){ //replaces Commands from API
     if(message.replies){
        let message_replies_concat = message.replies.join('@@@@'); //joining the strings to process the string without a loop
        for(let variable_name in customObj){
+         //edits the quick replies title
+         message.title = message.title.replace(variable_name.toString(),customObj[variable_name]);
+         //edits the quick replies texts
          message_replies_concat = message_replies_concat.replace(variable_name.toString(),customObj[variable_name])
         }
         message.replies = message_replies_concat.split('@@@@'); //Splitting the string back to an array
@@ -615,6 +680,122 @@ module.exports.ProccessActioner = ProccessActioner;
 
 
 
+// gets the conversation thread and builds the link from it
+function getConversationLink(user,conversations){
+    // the id we will use to find the conversation for the user
+    let userMainId = user.FBinfo.fb_main_id;
+    //finds the conversation of the user by searching for his id in the conversation participants
+    let userConversation = conversations.find(function(conversation){
+      return conversation.participants.data.find(function(participant){
+        return participant.id == userMainId;
+      });
+    })
+    // split the conversation link so we can take the needed parts
+    let link = userConversation.link.split('/')
+    // gets the pageName and Id from the splited link
+    let pageNameAndId = link[1]
+    // gets the threadId from the splited link and cleans it from extra charasters
+    let threadId = link[4].split('&')[0].substring(1);
+    // build the link
+    let chatLink = `https://business.facebook.com/${link[1]}/messages/?business_id=1703909179828191&${threadId}`
+       return chatLink;
+}
+
+// takes user access token and makes a call to the graph api for extending its life
+function extendTokenLife(accessToken){
+  return new Promise(function(resolve,reject){
+    fbInstance.api('oauth/access_token', {
+    grant_type: 'fb_exchange_token',
+    client_id: '125824107950843',
+    client_secret: '7b0313aaf169a871f89b9056ae198029',
+    fb_exchange_token: accessToken
+}, function (res) {
+    if(!res || res.error) {
+        console.log(!res ? 'error occurred' : res.error);
+        return;
+    }
+    let  extendedToken = res.access_token;
+    var expires = res.expires_in;
+
+    resolve(extendedToken)
+   });
+  })
+}
+
+// makes a call to the graph api with the provided code for getting user access token
+function getUserAccessToken(code){
+  return new Promise(function(resolve,reject){
+    fbInstance.api('oauth/access_token', {
+    redirect_uri: 'https://6f5a9032.ngrok.io/abc',
+    client_id: '125824107950843',
+    client_secret: '7b0313aaf169a871f89b9056ae198029',
+    code: code
+}, function (res) {
+    if(!res || res.error) {
+        console.log(!res ? 'error occurred' : res.error);
+        return;
+    }
+    var accessToken = res.access_token;
+    var expires = res.expires_in;
+    resolve(accessToken);
+   });
+  })
+}
+
+function getFbLoginUrl(args){
+  let link = fbInstance.getLoginUrl(args)
+  return link
+}
+
+// proccess a FB login attepmt
+function proccessFbLogin(FBcode){
+    return new Promise(function(resolve,reject){
+      let func = co(function*(){
+        let userToken = yield getUserAccessToken(FBcode);
+        let extendedUserToken = yield extendTokenLife(userToken);
+        let userMainId = yield fb.getUserMainIdByAccessToken(extendedUserToken);
+        let user = yield MongoDB.helpers.findUserByMainFbId(userMainId);
+        let userUpdated = yield MongoDB.helpers.findByFbIdAndUpdate(user.FBinfo.SenderId,{'FBinfo.Token': extendedUserToken})
+          if(userUpdated){
+             resolve(user);
+          } else {
+            resolve(false);
+          }
+      })
+      func();
+    })
+   }
+module.exports.proccessFbLogin = proccessFbLogin;
+
+function getAppAccessToken(){
+  return new Promise(function(resolve,reject){
+    fbInstance.api('oauth/access_token', {
+    client_id: '125824107950843',
+    client_secret: '7b0313aaf169a871f89b9056ae198029',
+    grant_typ: 'client_credentials'
+}, function (res) {
+    if(!res || res.error) {
+        console.log(!res ? 'error occurred' : res.error);
+        return;
+    }
+    console.log(res);
+    var accessToken = res.access_token;
+    var expires = res.expires_in;
+    resolve(accessToken);
+   });
+  })
+}
+
+
+
+
+function testAnything(){
+  return new Promise(function(resolve,reject){
+    // getAppAccessToken();
+    resolve(true);
+  })
+}
+module.exports.testAnything = testAnything;
 
 
 
@@ -627,6 +808,59 @@ module.exports.ProccessActioner = ProccessActioner;
 
 
 
+
+
+
+
+
+
+
+
+// finds the conversations and returns it as a link - testing function
+function ConversationFind(){
+  return new Promise(function(resolve,reject){
+    let func = co(function*(){
+      let user = yield MongoDB.helpers.findUserByFbId('1256338254484843');
+      let conversations = yield fb.getPageConversations('1144660365619636');
+      let userConversation = getConversationLink(user,conversations);
+      console.log(userConversation);
+    })
+    func()
+  })
+}
+module.exports.ConversationFind = ConversationFind;
+
+
+
+function requestMessageFromPageDetails(){
+   return new Promise((resolve, reject)=>{
+      FB.setAccessToken('EAAByb7VCMvsBADtJCZCCJIi6Sm8wXNM9SELxCy5Sqj2ryh4SQFebe0vC30U8aSGFDp3N2qXbuy9eA7RPZCBXpXzjjjzZBZCIpnCdLMXZBSbwbP0TowOtzVZCsfKHavTBP3TkZBeEy3ml226AZAXzvr0O3bZBitm1LDm6QJHWmPTAGPwZDZD');
+      FB.api(
+    '/m_mid.$cAAQREB3HTtlhsiN6MFbgN4w_dfPX?fields=from',
+    'GET',
+     {},
+  function(response) {
+      console.log(response);
+     }
+   );
+  })}
+module.exports.requestMessageFromPageDetails = requestMessageFromPageDetails;
+
+
+function requestPageAccessTokens(){
+  return new Promise((resolve, reject)=>{
+      FB.setAccessToken('EAAaQypCvZA8MBAHtAqwzHBnukwtgxgv1fmZAM2rsMEBV6ULlk2qavLYtLjpYXJPJvZCJF8nnE8ZCJrNdKxHlLUDKbyCnkH2ZC4NfRVQEPZCtrg7LGAE57kBNkjveBYcMbFFVzYJw9hEQZAYiZB3NZCAsljYkO91ZAl8tMZD');
+      FB.api(
+    '/me/accounts',
+    'GET',
+     {},
+  function(response) {
+      console.log(response);
+     }
+    );
+  })
+}
+module.exports.requestPageAccessTokens = requestPageAccessTokens;
 
 
 
