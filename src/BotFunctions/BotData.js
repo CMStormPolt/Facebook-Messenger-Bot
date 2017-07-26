@@ -5,36 +5,21 @@ const co = Promise.coroutine
 const FB = require("fb")
 const time = require('date-and-time')
 const fs = require('fs')
-
-let fbOptions = {
-  'appId': '125824107950843',
-  'appSecret': '7b0313aaf169a871f89b9056ae198029',
-  'Promise': Promise,
-  // 'redirectUri': 'https://www.facebook.com/Alina-Volkanova-1144660365619636/'
-  'redirectUri': 'https://6f5a9032.ngrok.io/abc'
-}
-let fbInstance = new FB.Facebook(fbOptions);
-
 const MongoDB = require('../MongoApparel/MongoDB')
 const BotCommandsClass = require('./BotCommandsClass').BotCommandsClass;
 const BotCommandsClassInstance = new BotCommandsClass(fb);
-//Useful Objects for Facebook - not used yet
-function SwitchPback2Reply(PostbackPayload){
-    switch(PostbackPayload){
-        case 'GoToFAQ':GoToFAQ;break;
-        case 'FAQdelivery':FAQdelivery;break;
-        case 'startFAQ':startFAQ;break;
-        case 'startfindProducts':startfindProducts;break;
-        case 'startOffers':startOffers;break;
-        case 'startGPSpics':startGPSpics;break;
-        case 'QuickReplies':QuickReplies;break;
-    }
-    return location
+
+let fbOptions = {
+  'appId': '',
+  'appSecret': '',
+  'Promise': Promise,
+  'redirectUri': ''
 }
+let fbInstance = new FB.Facebook(fbOptions);
 
 
-const BotCommands = ['BOT_Track_Suits','FAQdelivery','startFAQ', 'startfindProducts', 'startOffers', 'startGPSpics', 'BOTOn_Sale']
-exports.BotCommands = BotCommands
+
+
 
     //ParadiseBot functions
 
@@ -90,7 +75,7 @@ exports.startfindProducts = startfindProducts
             quick_replies:QR.quick_replies,
             attachment: {
                   type: "image",
-                  payload: {url: 'https://cms.flameflame.eu/uploads/1/1485862218SD110_(1)_resized.jpg'}
+                  payload: {url: ''}
              },
         }, SenderID)
     };
@@ -106,7 +91,7 @@ exports.BOT_Track_Suits = BOT_Track_Suits
             quick_replies:QR.quick_replies,
             attachment: {
                   type: "image",
-                  payload: {url: 'https://cms.flameflame.eu/uploads/1/1485862218SD110_(1)_resized.jpg'}
+                  payload: {url: ''}
              },
         }, SenderID)
     };
@@ -115,7 +100,7 @@ exports.BOT_New_Arrivals = BOT_New_Arrivals
 
     function startOffers(SenderID) {
       let Promo = {
-        'title':'Lovely <3 :)) You can click on the button to show next items :)',
+        'title':'Lovely <3 :))',
         'replies':["Keep 'em coming"]
       }
       fb.reply(fb.quickReply(Promo), SenderID)
@@ -635,7 +620,7 @@ getRandomNewArrivalsProductPic(senderId, category){
         }).parameters.about
         let problem_text = result.parameters.problem_details;
         let complaintSaved = yield MongoDB.helpers.createAndSaveComplaint(senderId,problem_category,problem_text);
-        let complaintSendToAgend = yield fb.sendComplaintToAgent('1256338254484843',complaintSaved,chatLink);
+        let complaintSendToAgend = yield fb.sendComplaintToAgent('',complaintSaved,chatLink);
         resolve({
           $complaint_saved: complaintSaved
         })
@@ -697,7 +682,7 @@ function getConversationLink(user,conversations){
     // gets the threadId from the splited link and cleans it from extra charasters
     let threadId = link[4].split('&')[0].substring(1);
     // build the link
-    let chatLink = `https://business.facebook.com/${link[1]}/messages/?business_id=1703909179828191&${threadId}`
+    let chatLink = `${threadId}`
        return chatLink;
 }
 
@@ -705,9 +690,9 @@ function getConversationLink(user,conversations){
 function extendTokenLife(accessToken){
   return new Promise(function(resolve,reject){
     fbInstance.api('oauth/access_token', {
-    grant_type: 'fb_exchange_token',
-    client_id: '125824107950843',
-    client_secret: '7b0313aaf169a871f89b9056ae198029',
+    grant_type: '',
+    client_id: '',
+    client_secret: '',
     fb_exchange_token: accessToken
 }, function (res) {
     if(!res || res.error) {
@@ -726,9 +711,9 @@ function extendTokenLife(accessToken){
 function getUserAccessToken(code){
   return new Promise(function(resolve,reject){
     fbInstance.api('oauth/access_token', {
-    redirect_uri: 'https://6f5a9032.ngrok.io/abc',
-    client_id: '125824107950843',
-    client_secret: '7b0313aaf169a871f89b9056ae198029',
+    redirect_uri: '',
+    client_id: '',
+    client_secret: '',
     code: code
 }, function (res) {
     if(!res || res.error) {

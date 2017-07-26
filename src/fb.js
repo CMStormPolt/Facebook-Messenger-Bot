@@ -109,7 +109,6 @@ function quickReply(apiai_qr) {
     let quick_replies = [];
 
     for (let repl of apiai_qr.replies) {
-        // let payload = 'BOT_'+ repl.replace(/\'/g,"").replace(/\:/g,"").replace(/\)/g,"").trim().replace(/ /g,"_")
         quick_replies.push({
             "content_type": "text",
             "title": repl,
@@ -123,23 +122,6 @@ function quickReply(apiai_qr) {
     };
 }
 
-function ImageQR(QuickR) {
-    let quick_replies = [];
-
-    for (let repl of QuickR.replies) {
-        let payload = 'BOT_'+repl.replace(/\'/g,"").replace(/\:/g,"").replace(/\)/g,"").trim().replace(/ /g,"_")
-        quick_replies.push({
-            "content_type": "text",
-            "title": repl,
-            "payload": payload
-        });
-    }
-
-    return {
-        "quick_replies": quick_replies
-    };
-}
-exports.ImageQR = ImageQR;
 
 
 function imageReply(message) {

@@ -106,10 +106,10 @@ class BotStack {
                   let proccessedUser = yield BotData.proccessFbLogin(code);
                   if(proccessedUser){
                       fb.reply(fb.textMessage("Thank you we are finished here :)"), proccessedUser.FBinfo.SenderId);
-                      res.redirect('https://www.facebook.com/Alina-Volkanova-1144660365619636/',next)
+                      res.redirect('/',next)
                   } else {
                       fb.reply(fb.textMessage("Sorry there seems to be some prolbem"), proccessedUser.FBinfo.SenderId);
-                      res.redirect('https://www.facebook.com/Alina-Volkanova-1144660365619636/',next)
+                      res.redirect('/',next)
                   }
                 })
                 func()

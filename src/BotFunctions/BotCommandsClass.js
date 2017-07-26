@@ -39,7 +39,7 @@ class BotCommandsClass{
           {
             type: "web_url",
             title: "Allow Addition Info",
-            url: 'https://www.facebook.com/v2.0/dialog/oauth?response_type=code&redirect_uri=https%3A%2F%2F6f5a9032.ngrok.io%2Fabc&client_id=125824107950843',
+            url: '',
             webview_height_ratio: "compact"
             }
           ]
